@@ -36,8 +36,8 @@ We wil use the following model:
 ```math
 \begin{equation}
   \begin{aligned}
-    \mathbf{x}_k & = \, \mathbf{A}\mathbf{x}_{k - 1} + \mathcal{P} \\
-    \mathbf{y}_k & = \, \mathbf{B}\mathbf{x}_{k} + \mathcal{Q} \\
+    \mathbf{x}_k & \sim \, \mathcal{N}(\mathbf{A}\mathbf{x}_{k - 1}, \mathcal{P}) \\
+    \mathbf{y}_k & \sim \, \mathcal{N}(\mathbf{B}\mathbf{x}_{k}, \mathcal{Q}) \\
   \end{aligned}
 \end{equation}
 ```
@@ -109,6 +109,13 @@ function generate_data(; n, A, B, P, Q, seed)
    
     return x, y
 end
+
+# ╔═╡ c6766a24-3d17-43bb-b458-0355966662cc
+html"""<style>
+main {
+    max-width: 65%;
+}
+"""
 
 # ╔═╡ 3011f498-9319-4dee-ba30-342ae0a2dc07
 begin
@@ -294,6 +301,11 @@ We may perform forward-only inference task which resembles Kalman filter for the
 # ╔═╡ 7671e1cc-4ff6-4c2b-b811-aa389a82c6b2
 @model function linear_gaussian_ssm_single_time_segment(A, B, P, Q)
     
+	cA = constvar(A)
+	cB = constvar(B)
+	cP = constvar(P)
+	cQ = constvar(Q)
+	
 	# We create a `datavar` placeholders for priors for the previous time step
 	# We will later iteratively change our priors based on posterior marginals
 	# on each time step
@@ -301,10 +313,10 @@ We may perform forward-only inference task which resembles Kalman filter for the
     x_min_t_cov  = datavar(Matrix{Float64})
     
     x_min_t ~ MvGaussianMeanCovariance(x_min_t_mean, x_min_t_cov)
-    x_t     ~ MvGaussianMeanCovariance(A * x_min_t, P)
+    x_t     ~ MvGaussianMeanCovariance(cA * x_min_t, cP)
     
     y_t = datavar(Vector{Float64})
-    y_t ~ MvGaussianMeanCovariance(B * x_t, Q)
+    y_t ~ MvGaussianMeanCovariance(cB * x_t, cQ)
     
     return x_min_t_mean, x_min_t_cov, x_t, y_t
 end
@@ -485,6 +497,7 @@ Compared to the previous demo (smoothing), the state estimation algorithm in thi
 # ╠═e39f30bf-5b19-4743-9a0e-16cafeed8d13
 # ╟─b6c7d8e3-c8c4-4b39-8c53-cbcb5f046b9b
 # ╠═dd06f508-d820-4a56-92eb-04d821c1f215
+# ╠═c6766a24-3d17-43bb-b458-0355966662cc
 # ╟─3011f498-9319-4dee-ba30-342ae0a2dc07
 # ╟─7dcd84fd-c505-4f97-875d-49decba5c3f2
 # ╠═ebc733ef-6638-4e42-a007-f2464ce3b5cf

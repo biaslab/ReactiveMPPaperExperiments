@@ -22,6 +22,9 @@ using PlutoUI
 # ╔═╡ 70f1e0a2-3f9c-42be-98e0-334c5abb08e7
 using Rocket, ReactiveMP, GraphPPL, Distributions, Random
 
+# ╔═╡ 92d0e561-299c-478b-82a7-f22cf71d7fce
+import ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate()
+
 # ╔═╡ f0d8d8a8-a881-4d83-b662-eec38dd732fd
 md"""
 Example: Inferring the bias of a coin
@@ -68,7 +71,7 @@ As you can see, GraphPPL.jl offer a model specification syntax that resembles cl
 
 # ╔═╡ c3f9d84e-b5c5-454d-8400-af107812a3d7
 md"""
-We will simulate coin toss process by sampling $n$ values from a Bernoulli distribution. Each sample can be thought of as the outcome of single flip which is either heads or tails (1 or 0). We will assume that our virtual coin is biased, and lands heads up on $p$ fraction of the trials (on average). We also use a `seed` parameter to make our experiments reproducable.
+We will simulate coin toss process by sampling $n$ values from a Bernoulli distribution. Each sample can be thought of as the outcome of single flip which is either heads or tails (1 or 0). We will assume that our virtual coin is biased, and lands heads up on $p$ fraction of the trials (on average). We also use a `seed` parameter to make our experiments reproducible.
 """
 
 # ╔═╡ 54a367e2-2a16-46a8-b3de-50c9e4f1827f
@@ -130,6 +133,7 @@ As we can see θ parameter has been estimated correctly with a very high precisi
 
 # ╔═╡ Cell order:
 # ╠═dafb5428-9d09-11eb-1d29-b9cd53c89545
+# ╠═92d0e561-299c-478b-82a7-f22cf71d7fce
 # ╠═dd08386e-a5e6-40ef-b7d1-1163ce3926a9
 # ╠═70f1e0a2-3f9c-42be-98e0-334c5abb08e7
 # ╟─f0d8d8a8-a881-4d83-b662-eec38dd732fd
