@@ -22,6 +22,9 @@ using PlutoUI, Images
 # ╔═╡ 55c581b8-43af-4646-be06-bd64200f7e32
 using Rocket, ReactiveMP, GraphPPL, Distributions, Random, Plots
 
+# ╔═╡ d215a164-b225-4d79-8411-c86c6135a25b
+import ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate();
+
 # ╔═╡ bbb878a0-1854-4bc4-9274-47edc8899795
 md"""
 #### Linear Multivariate Gaussian State-space Model
@@ -146,6 +149,15 @@ begin
 	Q_smoothing = [ 1.0 0.0; 0.0 1.0 ]
 end
 
+# ╔═╡ 2ce93b39-70ea-4b33-b9df-64e6ade6f896
+md"""
+seed = $(seed_smoothing_slider)
+
+n = $(n_smoothing_slider)
+
+θ = $(θ_smoothing_slider)
+"""
+
 # ╔═╡ b0831de2-2aeb-432b-8987-872f4c5d74f0
 x_smoothing, y_smoothing = generate_data(
 	n    = n_smoothing, 
@@ -159,15 +171,6 @@ x_smoothing, y_smoothing = generate_data(
 # ╔═╡ 934ad4d3-bb47-4174-b3d1-cbd6f8e5d75e
 md"""
 You may try to change data generation process parameters to immediatelly see how it affects data. We plot lines for real states $x_i$, and we plot scatter dots for noisy observations $y_i$.
-"""
-
-# ╔═╡ 2ce93b39-70ea-4b33-b9df-64e6ade6f896
-md"""
-seed = $(seed_smoothing_slider)
-
-n = $(n_smoothing_slider)
-
-θ = $(θ_smoothing_slider)
 """
 
 # ╔═╡ 099aa726-7694-4b38-875d-a015effc9d3a
@@ -188,6 +191,8 @@ begin
 	p = plot!(p, range, x_reshaped, label = x_label)
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	
+	ReactiveMPPaperExperiments.saveplot(p, "lgssm_smoothing_data")
 end
 
 # ╔═╡ 2530cf00-52c1-4c44-8d62-a3e4f0d411bc
@@ -227,15 +232,6 @@ function inference_full_graph(observations, A, B, P, Q)
     return getvalues(xbuffer)
 end
 
-# ╔═╡ 8981b0f8-9ff2-4c90-a958-0fe4da538809
-x_smoothing_estimated = inference_full_graph(
-	y_smoothing, 
-	A_smoothing, 
-	B_smoothing, 
-	P_smoothing, 
-	Q_smoothing
-);
-
 # ╔═╡ 84c171fc-fd79-43f2-942f-7ec6acd63c14
 md"""
 ### Smoothing results
@@ -246,6 +242,15 @@ n = $(n_smoothing_slider)
 
 θ = $(θ_smoothing_slider)
 """
+
+# ╔═╡ 8981b0f8-9ff2-4c90-a958-0fe4da538809
+x_smoothing_estimated = inference_full_graph(
+	y_smoothing, 
+	A_smoothing, 
+	B_smoothing, 
+	P_smoothing, 
+	Q_smoothing
+);
 
 # ╔═╡ cf1426f1-98d9-402a-80f6-27545fd06d94
 begin
@@ -270,6 +275,8 @@ begin
 	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	
+	ReactiveMPPaperExperiments.saveplot(p, "lgssm_smoothing_inference")
 end
 
 # ╔═╡ 1c6ee7dc-3ecc-43f6-a467-d21ef9c79b34
@@ -414,6 +421,8 @@ begin
 	p = plot!(p, range, x_reshaped, label = x_label)
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	
+	ReactiveMPPaperExperiments.saveplot(p, "lgssm_filtering_data")
 end
 
 # ╔═╡ 952cce56-c832-47cc-95ec-6c0d114add79
@@ -457,6 +466,8 @@ begin
 	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	
+	ReactiveMPPaperExperiments.saveplot(p, "lgssm_filtering_inference")
 end
 
 # ╔═╡ c082bbff-08ce-461e-a096-0df699a6f12d
@@ -466,6 +477,7 @@ Compared to the previous demo (smoothing), the state estimation algorithm in thi
 
 # ╔═╡ Cell order:
 # ╠═d160581c-9d1f-11eb-05f7-c5f29954488b
+# ╠═d215a164-b225-4d79-8411-c86c6135a25b
 # ╠═7013d403-a24c-4b6b-b03a-c257acdf80c8
 # ╠═55c581b8-43af-4646-be06-bd64200f7e32
 # ╟─bbb878a0-1854-4bc4-9274-47edc8899795
