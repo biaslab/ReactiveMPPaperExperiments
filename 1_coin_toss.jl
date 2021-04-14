@@ -20,7 +20,7 @@ using Revise
 using PlutoUI
 
 # ╔═╡ 70f1e0a2-3f9c-42be-98e0-334c5abb08e7
-using Rocket, ReactiveMP, GraphPPL, Distributions, Plots
+using Rocket, ReactiveMP, GraphPPL, Distributions, Random
 
 # ╔═╡ f0d8d8a8-a881-4d83-b662-eec38dd732fd
 md"""
@@ -68,19 +68,26 @@ As you can see, GraphPPL.jl offer a model specification syntax that resembles cl
 
 # ╔═╡ c3f9d84e-b5c5-454d-8400-af107812a3d7
 md"""
-We will simulate coin toss process by sampling $n$ values from a Bernoulli distribution. Each sample can be thought of as the outcome of single flip which is either heads or tails (1 or 0). We will assume that our virtual coin is biased, and lands heads up on $p$ fraction of the trials (on average).
+We will simulate coin toss process by sampling $n$ values from a Bernoulli distribution. Each sample can be thought of as the outcome of single flip which is either heads or tails (1 or 0). We will assume that our virtual coin is biased, and lands heads up on $p$ fraction of the trials (on average). We also use a `seed` parameter to make our experiments reproducable.
 """
 
 # ╔═╡ 54a367e2-2a16-46a8-b3de-50c9e4f1827f
 # number of coin tosses
-@bind n Slider(1:1000, default=500, show_value=true) 
+@bind n Slider(1:1000, default = 500, show_value=true) 
 
 # ╔═╡ baafcf7c-52b4-458e-8de7-24cf26986fae
 # p parameter of the Bernoulli distribution
-@bind p Slider(0.0:0.01:1.0, default=0.5, show_value=true)
+@bind p Slider(0.0:0.01:1.0, default = 0.5, show_value=true)
+
+# ╔═╡ 6d5d5123-4465-49de-aa9e-0828055da982
+# Seed value used for data generation
+@bind seed Slider(1:1000, default = 42, show_value=true)
 
 # ╔═╡ 16c2aee7-61ba-4440-9326-a1483e8872d0
-dataset = map(Float64, rand(Bernoulli(p), n))
+begin 
+	rng = MersenneTwister(seed)
+	dataset = map(Float64, rand(rng, Bernoulli(p), n))
+end
 
 # ╔═╡ 66612a6f-111d-496c-83ea-e6f0de30757f
 md"""
@@ -106,8 +113,20 @@ end
 # ╔═╡ 1ab48849-070a-4e93-b6f8-88ebd012caf1
 estimated_θ = inference(dataset)
 
-# ╔═╡ 6c418f65-3fc2-4bd0-bfa2-6869f37ddbc8
-mean(estimated_θ)
+# ╔═╡ 081d2f7e-ac43-413e-9f65-932b3e959f11
+md"""
+Our `inference` function simply returns a posterior marginal distribution over θ parameter in our model. We can take a `mean` of that distribution to compare it with the real parameter used to generate data
+
+real = $(p)
+
+mean(estimated\_θ) = $(mean(estimated_θ))
+
+var(estimated\_θ) = $(var(estimated_θ))
+
+difference = $(abs(p - mean(estimated_θ)))
+
+As we can see θ parameter has been estimated correctly with a very high precision.
+"""
 
 # ╔═╡ Cell order:
 # ╠═dafb5428-9d09-11eb-1d29-b9cd53c89545
@@ -120,8 +139,9 @@ mean(estimated_θ)
 # ╟─c3f9d84e-b5c5-454d-8400-af107812a3d7
 # ╠═54a367e2-2a16-46a8-b3de-50c9e4f1827f
 # ╠═baafcf7c-52b4-458e-8de7-24cf26986fae
+# ╠═6d5d5123-4465-49de-aa9e-0828055da982
 # ╠═16c2aee7-61ba-4440-9326-a1483e8872d0
 # ╟─66612a6f-111d-496c-83ea-e6f0de30757f
 # ╠═6e43fdb2-7b39-4f04-b526-e20976e9e3c9
 # ╠═1ab48849-070a-4e93-b6f8-88ebd012caf1
-# ╠═6c418f65-3fc2-4bd0-bfa2-6869f37ddbc8
+# ╟─081d2f7e-ac43-413e-9f65-932b3e959f11
