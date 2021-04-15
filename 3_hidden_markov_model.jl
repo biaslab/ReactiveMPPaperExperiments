@@ -138,10 +138,10 @@ end
 # ╔═╡ 1d23082e-ab18-4ca6-9383-aaebddb29f00
 begin
 	seed_slider = 
-		@bind(seed, ThrottledSlider(1:100, default = 42, show_value = true))
+		@bind(seed, ThrottledSlider(1:100, default = 41, show_value = true))
 	
 	n_slider = 
-		@bind(n, ThrottledSlider(2:100, default = 50, show_value = true))
+		@bind(n, ThrottledSlider(2:100, default = 75, show_value = true))
 end;
 
 # ╔═╡ f28c42fc-1e8a-4e3b-a0cf-73da0c7875cd
@@ -218,8 +218,9 @@ Since this a approximate variational message passing results may differ dependin
 """
 
 # ╔═╡ ebcbb7a5-5fb5-4de9-bb93-ec3d9c6af031
-n_its_slider = 
-	@bind(n_itr, throttled(Slider(2:100, default = 50, show_value = true)));
+n_its_slider = @bind(
+	n_itr, ThrottledSlider(2:25, default = 15, show_value = true, throttle = 150)
+);
 
 # ╔═╡ 010364bf-b778-4696-be41-8ccdeb3132d3
 md"""
@@ -247,11 +248,11 @@ begin
 	p = plot!(p, ylabel = "Free energy", yguidefontsize = 8)
 	p = plot!(p, xlabel = "Iteration index", xguidefontsize = 8)
 	
-	if n_itr > 5
+	if n_itr > 10
 		local range        = 1:n_itr
 		local lens_x_range = [ Int(round(0.75 * n_itr)), n_itr ]
 
-		local diff = abs(maximum(fe[lens_x_range]) - minimum(fe[lens_x_range]))
+		local diff = 0.5abs(maximum(fe[lens_x_range]) - minimum(fe[lens_x_range]))
 
 		local lens_y_range = [ 
 			minimum(fe[lens_x_range]) - diff, maximum(fe[lens_x_range]) + diff 
@@ -263,7 +264,7 @@ begin
 		)
 	end
 	
-	p
+	ReactiveMPPaperExperiments.saveplot(p, "hmm_fe")
 end
 
 # ╔═╡ eeef9d32-805f-4958-aabb-b552430f2d4d
@@ -289,9 +290,80 @@ md"""
 
 # ╔═╡ 6fe2241b-80d5-45b8-84c9-3d834f2a4121
 begin
-	scatter(argmax.(s), ms = 3)
-	plot!(mean.(s_est[end]), ribbon = std.(s_est[end]), fillalpha = 0.2)
+	local p = plot()
+	
+	local range       = 1:n
+	local s_states    = argmax.(s)
+	local s_estimated = mean.(last(s_est))
+	local s_err       = std.(last(s_est))
+	
+	p = scatter!(p, range, s_states, ms = 3, label = "Real states")
+	p = plot!(p, range, s_estimated, ribbon = s_err, fillalpha = 0.2, label = "Estimated")
+	p = plot!(xlabel = "Iteration index", xguidefontsize = 8)
+	
+	ReactiveMPPaperExperiments.saveplot(p, "hmm_inference")
 end
+
+# ╔═╡ c908eba5-8e36-416b-a2d7-3d994c454b85
+md"""
+We may also interested in our state transition matrices estimations. We may plot real and estimated matrices together side by side on one plot to verify that we actually find it correctly.
+"""
+
+# ╔═╡ 74924c8e-7141-4e0d-aaa6-78732726498e
+begin
+	local rotate90 = (m) -> begin
+		hcat(reverse(collect(eachcol(transpose(m))))...)
+	end
+	
+	local rA     = rotate90(A)
+	local rA_est = rotate90(mean(last(A_est)))
+	local rB     = rotate90(B)
+	local rB_est = rotate90(mean(last(B_est)))
+	local p1 = plot()
+	local p2 = plot()
+	local p3 = plot()
+	local p4 = plot()
+	
+	color = :blues
+
+	p1 = heatmap!(
+		p1, [ "1", "2", "3" ], [ "3", "2", "1" ], rA_est, 
+		title = "Estimated matrix coefficients", titlefont = 8,
+		clim = (0.0, 1.0), color=color
+	)
+	p2 = heatmap!(
+		p2, [ "1", "2", "3" ], [ "3", "2", "1" ], 
+		title = "Squared error difference", titlefont = 8,
+		abs2.(rA .- rA_est), 
+		clim = (0.0, 1.0), color=color
+	)
+	
+	p3 = heatmap!(
+		p3, [ "1", "2", "3" ], [ "3", "2", "1" ], rB_est, 
+		title = "Estimated matrix coefficients", titlefont = 8,
+		clim = (0.0, 1.0), color=color
+	)
+	p4 = heatmap!(
+		p4, [ "1", "2", "3" ], [ "3", "2", "1" ], 
+		title = "Squared error difference", titlefont = 8,
+		abs2.(rB .- rB_est),
+		clim = (0.0, 1.0), color=color
+	)
+	
+	local p = plot(
+		p1, p2, p3, p4, size = (500, 400), layout = @layout([ a b; c d ])
+	)
+	
+	ReactiveMPPaperExperiments.saveplot(plot(p1, p2), "hmm_A")
+	ReactiveMPPaperExperiments.saveplot(plot(p3, p4), "hmm_B")
+	
+	p
+end
+
+# ╔═╡ ff8aa1bb-300d-471f-b260-25b477366e22
+md"""
+On the left side we may see an estimated matrices $A$ and $B$. On the right there is a difference beetween real matrices and the estimated ones. We can see that the algorithm correctly predicted matrices $A$ and $B$ in our model with very small error.
+"""
 
 # ╔═╡ Cell order:
 # ╠═a4affbe0-9d3d-11eb-1ca5-059daf3d3141
@@ -321,4 +393,7 @@ end
 # ╟─eeef9d32-805f-4958-aabb-b552430f2d4d
 # ╟─97176b6d-881d-4be1-922e-4f89b99bf792
 # ╟─64a3414c-5b95-46a3-94d1-9f2d7f24284d
-# ╠═6fe2241b-80d5-45b8-84c9-3d834f2a4121
+# ╟─6fe2241b-80d5-45b8-84c9-3d834f2a4121
+# ╟─c908eba5-8e36-416b-a2d7-3d994c454b85
+# ╟─74924c8e-7141-4e0d-aaa6-78732726498e
+# ╟─ff8aa1bb-300d-471f-b260-25b477366e22

@@ -13,6 +13,7 @@ function instantiate()
     else
         eval("using PGFPlotsX")
         pgfplotsx()
+        println("Script instantiated")
     end
 
     return nothing
@@ -25,6 +26,8 @@ function saveplot(p, name)
 
     savefig(p, "figures/$(name).tikz")
     savefig(p, "figures/$(name).png")
+
+    println("Saved figures/$(name)*")
     
     return p
 end

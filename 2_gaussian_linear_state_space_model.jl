@@ -385,6 +385,9 @@ begin
 	)
 end;
 
+# ╔═╡ b6ce4477-5255-4bf8-b180-5faf6659f541
+
+
 # ╔═╡ 633bbd88-84d3-4d91-a2b6-e5e953171e45
 begin
 	A_filtering = [ 
@@ -518,6 +521,7 @@ Compared to the previous demo (smoothing), the state estimation algorithm in thi
 # ╟─3bdd805a-913c-48ac-8fd7-da7ba9ac99bd
 # ╠═9b9b7b02-a8fa-4d67-8ace-bcd30663e312
 # ╠═b8dea87a-258a-4849-bb12-7e9b5d1420ae
+# ╠═b6ce4477-5255-4bf8-b180-5faf6659f541
 # ╠═633bbd88-84d3-4d91-a2b6-e5e953171e45
 # ╟─0ee27a13-39b5-4f4c-8153-51c132663e2e
 # ╠═ca8a7196-b573-4d72-8706-f0965e0f72d6
