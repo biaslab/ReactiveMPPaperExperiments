@@ -1070,9 +1070,9 @@ version = "1.11.2"
 
 [[Pluto]]
 deps = ["Base64", "Dates", "Distributed", "FuzzyCompletions", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "TableIOInterface", "Tables", "UUIDs"]
-git-tree-sha1 = "330dce68faaf8614f8e33dd30bc8a3b911845987"
+git-tree-sha1 = "7764c0ad79718a5e5f684b68db7cb069fb60b909"
 uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-version = "0.14.1"
+version = "0.14.2"
 
 [[PlutoUI]]
 deps = ["Base64", "Dates", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "Suppressor"]
@@ -1221,9 +1221,9 @@ uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
 [[SciMLBase]]
 deps = ["ArrayInterface", "CommonSolve", "Distributed", "DocStringExtensions", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "RecipesBase", "RecursiveArrayTools", "StaticArrays", "Statistics", "Tables", "TreeViews"]
-git-tree-sha1 = "2208f13e3f19aaf182357082fb48a0a94c279990"
+git-tree-sha1 = "5b2d6abf15ca437d55f5e84c1c3fff2d2d6e4930"
 uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
-version = "1.11.1"
+version = "1.11.3"
 
 [[ScientificTypes]]
 git-tree-sha1 = "1d3f5f8bdf5dd0c9951eb9c595ee08a728aec331"

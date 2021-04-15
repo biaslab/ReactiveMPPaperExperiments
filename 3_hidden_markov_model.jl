@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.1
+# v0.14.2
 
 using Markdown
 using InteractiveUtils
@@ -52,6 +52,39 @@ md"""
 ### Model specification
 """
 
+# ╔═╡ 927a5ad7-7ac0-4e8a-a755-d1223093b992
+md"""
+GraphPPL.jl offer a model specification syntax that resembles closely to the mathematical equations defined above. We use `Transition` node for `Cat(Ax)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `x`.
+"""
+
+# ╔═╡ c01151b2-5476-4170-971c-518019e891f8
+md"""
+### Synthetic data generation
+
+We will simulate hidden markov model process by sampling $n$ values from corresponding distributions with fixed A and B matrices. We also use a `seed` parameter to make our experiments reproducible.
+"""
+
+# ╔═╡ 9aff5f73-0e50-4ed3-ac35-355afa0d4137
+function rand_vec(distribution::Categorical) 
+    k = ncategories(distribution)
+    s = zeros(k)
+    s[ rand(distribution) ] = 1.0
+    s
+end
+
+# ╔═╡ 9e84c744-5157-4e7c-b910-481f8b6e086c
+function normalise(a)
+	return a ./ sum(a)
+end
+
+# ╔═╡ 30f46dae-6665-4bbc-9451-ee6744c5a6aa
+begin
+	# Transition probabilities (some transitions are impossible)
+    A = [0.9 0.0 0.1; 0.1 0.9 0.0; 0.0 0.1 0.9] 
+    # Observation noise
+    B = [0.9 0.05 0.05; 0.05 0.9 0.05; 0.05 0.05 0.9] 
+end
+
 # ╔═╡ 5c14ef6a-9a9a-4fb6-9e11-90a61b878866
 @model [ default_factorisation = MeanField() ] function hidden_markov_model(n)
     
@@ -80,39 +113,10 @@ md"""
     return s, x, A, B
 end
 
-# ╔═╡ 927a5ad7-7ac0-4e8a-a755-d1223093b992
-md"""
-GraphPPL.jl offer a model specification syntax that resembles closely to the mathematical equations defined above. We use `Transition` node for `Cat(Ax)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `x`.
-"""
-
-# ╔═╡ c01151b2-5476-4170-971c-518019e891f8
-md"""
-### Synthetic data generation
-
-We will simulate hidden markov model process by sampling $n$ values from corresponding distributions with fixed A and B matrices. We also use a `seed` parameter to make our experiments reproducible.
-"""
-
-# ╔═╡ 9aff5f73-0e50-4ed3-ac35-355afa0d4137
-function rand_vec(distribution::Categorical) 
-    k = ncategories(distribution)
-    s = zeros(k)
-    s[ rand(distribution) ] = 1.0
-    s
-end
-
-# ╔═╡ 9e84c744-5157-4e7c-b910-481f8b6e086c
-function normalise(a)
-	return a ./ sum(a)
-end
-
 # ╔═╡ 34ef9070-dc89-4a56-8914-b3c8bd3288ba
-function generate_data(n_samples; seed = 124)
+function generate_data(n_samples, A, B; seed = 124)
     Random.seed!(seed)
     
-    # Transition probabilities (some transitions are impossible)
-    A = [0.9 0.0 0.1; 0.1 0.9 0.0; 0.0 0.1 0.9] 
-    # Observation noise
-    B = [0.9 0.05 0.05; 0.05 0.9 0.05; 0.05 0.05 0.9] 
     # Initial state
     s_0 = [1.0, 0.0, 0.0] 
 	
@@ -133,13 +137,11 @@ end
 
 # ╔═╡ 1d23082e-ab18-4ca6-9383-aaebddb29f00
 begin
-	seed_slider = @bind(
-		seed, debounced(:seed, Slider(1:100, default = 42, show_value = true))
-	)
+	seed_slider = 
+		@bind(seed, ThrottledSlider(1:100, default = 42, show_value = true))
 	
-	n_slider = @bind(
-		n, debounced(:n, Slider(1:100, default = 50, show_value = true))
-	)
+	n_slider = 
+		@bind(n, ThrottledSlider(2:100, default = 50, show_value = true))
 end;
 
 # ╔═╡ f28c42fc-1e8a-4e3b-a0cf-73da0c7875cd
@@ -151,10 +153,12 @@ md"""
 """
 
 # ╔═╡ 56917bc7-dce2-4251-9997-6164a2c2f24f
-x, s = generate_data(n, seed = seed)
+x, s = generate_data(n, A, B, seed = seed)
 
 # ╔═╡ dd0e02b4-e5c7-46eb-8a80-060d22e640b9
 md"""
+### Inference
+
 Once we have defined our model and generated some synthetic data, the next step is to use ReactiveMP.jl API to run a reactive message-passing algorithm that solves our given inference problem. To do this, we need to specify which variables we are interested in. We obtain a posterior marginal updates stream by calling `getmarginal()` function and pass `A` as an argument as an example. We can also use `getmarginals()` function to obtain a stream of updates over a collection of random variables.
 
 We use `subscribe!` function from `Rocket.jl` to subscribe on posterior marginal updates and to store them in a local buffers. 
@@ -208,15 +212,18 @@ function inference(observations, n_its)
     return map(getvalues, (sbuffer, Abuffer, Bbuffer, fe))
 end
 
+# ╔═╡ 31f009ba-fb29-4633-b3a6-56e10544126a
+md"""
+Since this a approximate variational message passing results may differ depending on the number of VMP iterations performed.
+"""
+
 # ╔═╡ ebcbb7a5-5fb5-4de9-bb93-ec3d9c6af031
-n_its_slider = @bind(
-	n_itr, 
-	debounced(:n_itr, Slider(2:100, default = 50, show_value = true), wait = 50)
-);
+n_its_slider = 
+	@bind(n_itr, throttled(Slider(2:100, default = 50, show_value = true)));
 
 # ╔═╡ 010364bf-b778-4696-be41-8ccdeb3132d3
 md"""
-Here we may modify some of parameters for the data generation process
+Here we may modify some of parameters for the data generation process and VMP inference procedure.
 """
 
 # ╔═╡ f267254c-84f8-4b67-b5c7-1dfabda12e3d
@@ -232,10 +239,59 @@ md"""
 s_est, A_est, B_est, fe = inference(x, n_itr);
 
 # ╔═╡ 5b60460c-5f93-41b5-b44b-820523098385
-plot(fe)
+begin
+	local p = plot()
+	
+	p = plot!(p, title = "Bethe Free Energy functional", titlefontsize = 10)
+	p = plot!(p, fe, xticks = 1:3:n_itr, label = "\$BFE\$")
+	p = plot!(p, ylabel = "Free energy", yguidefontsize = 8)
+	p = plot!(p, xlabel = "Iteration index", xguidefontsize = 8)
+	
+	if n_itr > 5
+		local range        = 1:n_itr
+		local lens_x_range = [ Int(round(0.75 * n_itr)), n_itr ]
 
-# ╔═╡ e346b287-2fc1-4f83-a379-3f9d68faffe0
-n_its_slider
+		local diff = abs(maximum(fe[lens_x_range]) - minimum(fe[lens_x_range]))
+
+		local lens_y_range = [ 
+			minimum(fe[lens_x_range]) - diff, maximum(fe[lens_x_range]) + diff 
+		]
+
+		p = lens!(
+			p, lens_x_range, lens_y_range, 
+			inset = (1, bbox(0.5, 0.4, 0.4, 0.2))
+		)
+	end
+	
+	p
+end
+
+# ╔═╡ eeef9d32-805f-4958-aabb-b552430f2d4d
+md"""
+We can see that in all of the cases our algorithm minimises Bethe Free Energy functional correctly and, hence, should lead to a proper approximate solution.
+"""
+
+# ╔═╡ 97176b6d-881d-4be1-922e-4f89b99bf792
+md"""
+### Verification
+
+To inspect the quality of the inferred state sequence, we plot the simulated process, observations and inferred state sequence.
+"""
+
+# ╔═╡ 64a3414c-5b95-46a3-94d1-9f2d7f24284d
+md"""
+|             |                  |
+| ----------- | ---------------- |
+| seed        | $(seed_slider)   |
+| n           | $(n_slider)      |
+| n_its       | $(n_its_slider)  |
+"""
+
+# ╔═╡ 6fe2241b-80d5-45b8-84c9-3d834f2a4121
+begin
+	scatter(argmax.(s), ms = 3)
+	plot!(mean.(s_est[end]), ribbon = std.(s_est[end]), fillalpha = 0.2)
+end
 
 # ╔═╡ Cell order:
 # ╠═a4affbe0-9d3d-11eb-1ca5-059daf3d3141
@@ -249,15 +305,20 @@ n_its_slider
 # ╟─c01151b2-5476-4170-971c-518019e891f8
 # ╠═9aff5f73-0e50-4ed3-ac35-355afa0d4137
 # ╠═9e84c744-5157-4e7c-b910-481f8b6e086c
+# ╠═30f46dae-6665-4bbc-9451-ee6744c5a6aa
 # ╠═34ef9070-dc89-4a56-8914-b3c8bd3288ba
 # ╠═1d23082e-ab18-4ca6-9383-aaebddb29f00
 # ╟─f28c42fc-1e8a-4e3b-a0cf-73da0c7875cd
 # ╠═56917bc7-dce2-4251-9997-6164a2c2f24f
 # ╟─dd0e02b4-e5c7-46eb-8a80-060d22e640b9
 # ╠═3866d103-7f73-4ff1-8949-20ab0cfd3704
+# ╟─31f009ba-fb29-4633-b3a6-56e10544126a
 # ╠═ebcbb7a5-5fb5-4de9-bb93-ec3d9c6af031
 # ╟─010364bf-b778-4696-be41-8ccdeb3132d3
 # ╟─f267254c-84f8-4b67-b5c7-1dfabda12e3d
 # ╠═c9dd7f62-e02b-4b50-ae47-151b8772a899
-# ╠═5b60460c-5f93-41b5-b44b-820523098385
-# ╠═e346b287-2fc1-4f83-a379-3f9d68faffe0
+# ╟─5b60460c-5f93-41b5-b44b-820523098385
+# ╟─eeef9d32-805f-4958-aabb-b552430f2d4d
+# ╟─97176b6d-881d-4be1-922e-4f89b99bf792
+# ╟─64a3414c-5b95-46a3-94d1-9f2d7f24284d
+# ╠═6fe2241b-80d5-45b8-84c9-3d834f2a4121
