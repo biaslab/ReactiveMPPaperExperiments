@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.1
+# v0.14.2
 
 using Markdown
 using InteractiveUtils
@@ -16,14 +16,14 @@ end
 # ╔═╡ d160581c-9d1f-11eb-05f7-c5f29954488b
 using Revise
 
+# ╔═╡ d215a164-b225-4d79-8411-c86c6135a25b
+using ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate();
+
 # ╔═╡ 7013d403-a24c-4b6b-b03a-c257acdf80c8
 using PlutoUI, Images
 
 # ╔═╡ 55c581b8-43af-4646-be06-bd64200f7e32
 using Rocket, ReactiveMP, GraphPPL, Distributions, Random, Plots
-
-# ╔═╡ d215a164-b225-4d79-8411-c86c6135a25b
-import ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate();
 
 # ╔═╡ bbb878a0-1854-4bc4-9274-47edc8899795
 md"""
@@ -110,11 +110,9 @@ function generate_data(; n, A, B, P, Q, seed)
     return x, y
 end
 
-# ╔═╡ c6766a24-3d17-43bb-b458-0355966662cc
-html"""<style>
-main {
-    max-width: 65%;
-}
+# ╔═╡ 210d41a9-a8ff-4c24-9b88-524bed03cd7f
+md"""
+Pluto allows us to interactively explore and experiment with our models. Here we will create a set of sliders for later use. These sliders will allow us to dinamicaly change our model and data generation parameters and see changes immediatelly.
 """
 
 # ╔═╡ 3011f498-9319-4dee-ba30-342ae0a2dc07
@@ -122,19 +120,21 @@ begin
 	# Seed for random number generator for full graph
 	seed_smoothing_slider = @bind(
 		seed_smoothing, 
-		Slider(1:100, default = 42, show_value = true)
+		ThrottledSlider(1:100, default = 42, show_value = true)
 	)
 	
 	# Number of observations on our model for full graph
 	n_smoothing_slider = @bind(
 		n_smoothing, 
-		Slider(1:200, default = 100, show_value = true)
+		ThrottledSlider(1:200, default = 100, show_value = true)
 	)
 	
 	# θ parameter is a rotation angle for transition matrix
 	θ_smoothing_slider = @bind(
 		θ_smoothing, 
-		Slider(range(0.0, π/2, length = 100), default = π/20, show_value = true)
+		ThrottledSlider(
+			range(0.0, π/2, length = 100), default = π/20, show_value = true
+		)
 	)
 end;
 
@@ -158,11 +158,11 @@ end
 
 # ╔═╡ 2ce93b39-70ea-4b33-b9df-64e6ade6f896
 md"""
-seed = $(seed_smoothing_slider)
-
-n = $(n_smoothing_slider)
-
-θ = $(θ_smoothing_slider)
+|      |     |
+| ---- | --- |
+| seed | $(seed_smoothing_slider) |
+| n    | $(n_smoothing_slider) |
+| θ    | $(θ_smoothing_slider) |
 """
 
 # ╔═╡ b0831de2-2aeb-432b-8987-872f4c5d74f0
@@ -241,13 +241,13 @@ end
 
 # ╔═╡ 84c171fc-fd79-43f2-942f-7ec6acd63c14
 md"""
-### Smoothing results
+### Smothing results
 
-seed = $(seed_smoothing_slider)
-
-n = $(n_smoothing_slider)
-
-θ = $(θ_smoothing_slider)
+|      |     |
+| ---- | --- |
+| seed | $(seed_smoothing_slider) |
+| n    | $(n_smoothing_slider) |
+| θ    | $(θ_smoothing_slider) |
 """
 
 # ╔═╡ 8981b0f8-9ff2-4c90-a958-0fe4da538809
@@ -367,23 +367,23 @@ begin
 	# Seed for random number generator for filtering case
 	seed_filtering_slider = @bind(
 		seed_filtering, 
-		Slider(1:100, default = 42, show_value = true)
+		ThrottledSlider(1:100, default = 42, show_value = true)
 	)
 	
 	# Number of observations on our model for filtering case
 	n_filtering_slider = @bind(
 		n_filtering, 
-		Slider(1:200, default = 100, show_value = true)
+		ThrottledSlider(1:200, default = 100, show_value = true)
 	)
 	
 	# θ parameter is a rotation angle for transition matrix
 	θ_filtering_slider = @bind(
 		θ_filtering, 
-		Slider(range(0.0, π/2, length = 100), default = π/20, show_value = true)
+		ThrottledSlider(
+			range(0.0, π/2, length = 100), default = π/20, show_value = true
+		)
 	)
-	
-	nothing
-end
+end;
 
 # ╔═╡ 633bbd88-84d3-4d91-a2b6-e5e953171e45
 begin
@@ -398,11 +398,11 @@ end;
 
 # ╔═╡ 0ee27a13-39b5-4f4c-8153-51c132663e2e
 md"""
-seed = $(seed_filtering_slider)
-
-n = $(n_filtering_slider)
-
-θ = $(θ_filtering_slider)
+|      |     |
+| ---- | --- |
+| seed | $(seed_filtering_slider) |
+| n    | $(n_filtering_slider) |
+| θ    | $(θ_filtering_slider) |
 """
 
 # ╔═╡ ca8a7196-b573-4d72-8706-f0965e0f72d6
@@ -439,11 +439,13 @@ end
 
 # ╔═╡ 952cce56-c832-47cc-95ec-6c0d114add79
 md"""
-seed = $(seed_filtering_slider)
+### Filtering results
 
-n = $(n_filtering_slider)
-
-θ = $(θ_filtering_slider)
+|      |     |
+| ---- | --- |
+| seed | $(seed_filtering_slider) |
+| n    | $(n_filtering_slider) |
+| θ    | $(θ_filtering_slider) |
 """
 
 # ╔═╡ 989923c9-6871-449f-91eb-d20db563d568
@@ -497,8 +499,8 @@ Compared to the previous demo (smoothing), the state estimation algorithm in thi
 # ╠═e39f30bf-5b19-4743-9a0e-16cafeed8d13
 # ╟─b6c7d8e3-c8c4-4b39-8c53-cbcb5f046b9b
 # ╠═dd06f508-d820-4a56-92eb-04d821c1f215
-# ╠═c6766a24-3d17-43bb-b458-0355966662cc
-# ╟─3011f498-9319-4dee-ba30-342ae0a2dc07
+# ╟─210d41a9-a8ff-4c24-9b88-524bed03cd7f
+# ╠═3011f498-9319-4dee-ba30-342ae0a2dc07
 # ╟─7dcd84fd-c505-4f97-875d-49decba5c3f2
 # ╠═ebc733ef-6638-4e42-a007-f2464ce3b5cf
 # ╟─2ce93b39-70ea-4b33-b9df-64e6ade6f896
@@ -515,7 +517,7 @@ Compared to the previous demo (smoothing), the state estimation algorithm in thi
 # ╠═7671e1cc-4ff6-4c2b-b811-aa389a82c6b2
 # ╟─3bdd805a-913c-48ac-8fd7-da7ba9ac99bd
 # ╠═9b9b7b02-a8fa-4d67-8ace-bcd30663e312
-# ╟─b8dea87a-258a-4849-bb12-7e9b5d1420ae
+# ╠═b8dea87a-258a-4849-bb12-7e9b5d1420ae
 # ╠═633bbd88-84d3-4d91-a2b6-e5e953171e45
 # ╟─0ee27a13-39b5-4f4c-8153-51c132663e2e
 # ╠═ca8a7196-b573-4d72-8706-f0965e0f72d6

@@ -14,11 +14,11 @@ end
 `@bind x ThrottledSlider(1:10; default=8, show_value=true)`
 `@bind x ThrottledSlider(1:10; default=8, show_value=true, throttle = 50)`
 """
-function ThrottledSlider(range::AbstractRange; default=missing, show_value=false, throttle = 50) 
+function ThrottledSlider(range::AbstractRange; default=missing, show_value=false, throttle = 32) 
     return ThrottledSlider(range, (default === missing) ? first(range) : default, throttle, show_value)
 end
 
-function show(io::IO, ::MIME"text/html", slider::ThrottledSlider)
+function Base.show(io::IO, ::MIME"text/html", slider::ThrottledSlider)
 
     sid = string(join(rand('a':'z', 10)));
     id  = string(join(rand('a':'z', 10)));
@@ -34,7 +34,7 @@ function show(io::IO, ::MIME"text/html", slider::ThrottledSlider)
         >""")
     
     if slider.show_value
-        print(io, """<output>$(slider.default)</output>""")
+        print(io, """<output>$(typeof(slider.default) <: Float64 ? round(slider.default, digits = 3) : slider.default)</output>""")
     end
 
     script = """
@@ -51,7 +51,7 @@ function show(io::IO, ::MIME"text/html", slider::ThrottledSlider)
                 const dispatchEvent = () => {
                     sp.value = value
                     sp.dispatchEvent(new CustomEvent("input", {}))
-                    el.nextElementSibling.value = value
+                    el.nextElementSibling.value = Number.isInteger(value) ? value : value.toPrecision(2)
                 }
 
                 const debouncedEvent = _.throttle(dispatchEvent, $(slider.throttle))
