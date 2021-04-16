@@ -3,7 +3,11 @@ uuid = "adcd1038-27e6-4580-819b-caa5dba07e45"
 authors = ["Bagaev Dmitry <bvdmitri@gmail.com>"]
 version = "0.1.0"
 
+[compat]
+julia = "1.6.0"
+
 [deps]
+DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GraphPPL = "b3f8163a-e979-4e85-b43e-1f63d8c8b42c"
