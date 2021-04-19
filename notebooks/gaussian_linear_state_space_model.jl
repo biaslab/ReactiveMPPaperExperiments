@@ -55,12 +55,43 @@ We wil use the following model:
 
 In this model, we denote by $\mathbf{x}_k$ the current state of the system (at time step $k$), by $\mathbf{x}_{k - 1}$ the previous state at time $k-1$, $\mathbf{A}$ and $\mathbf{B}$ are a constant system inputs and $\mathbf{y}_k$ is a noisy observation of $\mathbf{x}_k$. We further assume that the states and the observations are corrupted by i.i.d. Gaussian noise with variances $\mathcal{P}$ and $\mathcal{Q}$ respectively.
 
-$(load(projectdir("figures", "ssm_model.png")))
-
 The SSM can be represented by the following factor graph, where the pictured section is chained over time:
 
-For smoothing (forward-backward) estimation in ReactiveMP.jl, it is possible to build a full graph of the model.
+$(load(projectdir("figures", "ssm_model.png")))
+
+Usually this type of model is used for a linear differential equations where the measured quantities were linear functions of the state. For example this can be the dynamics of the car or noisy pendulum model [Bayesian Filtering and Smoothing, Särkkä, Simo, p.~44].
 """
+
+# ╔═╡ 5fc0ccdf-70e2-46ac-a77e-34f01b885dec
+md"""
+### Data
+"""
+
+# ╔═╡ f1353252-62c4-4ec4-acea-bdfb18c747ae
+md"""
+For testing purposes we can use synthetically generated data where underlying data generation process matches our model specification.
+"""
+
+# ╔═╡ 87d0a5d1-743d-49a7-863e-fb3b795d72f3
+function generate_data(; n, A, B, P, Q, seed)
+	
+	# We create a local RNG to make our results reproducable
+    rng = MersenneTwister(seed)
+
+    x_prev = zeros(2)
+
+    x = Vector{Vector{Float64}}(undef, n)
+    y = Vector{Vector{Float64}}(undef, n)
+
+    for i in 1:n
+        x[i] = rand(rng, MvNormal(A * x_prev, P))
+        y[i] = rand(rng, MvNormal(B * x[i], Q))
+
+        x_prev = x[i]
+    end
+   
+    return x, y
+end
 
 # ╔═╡ 9a8ce058-e7c3-4730-b4bd-b8782cead88f
 md"""
@@ -92,32 +123,6 @@ md"""
         y[t] ~ MvGaussianMeanCovariance(cB * x[t], cQ)    
     end
     
-    return x, y
-end
-
-# ╔═╡ b6c7d8e3-c8c4-4b39-8c53-cbcb5f046b9b
-md"""
-For testing purposes we can use synthetically generated data where underlying data generation process matches our model specification.
-"""
-
-# ╔═╡ dd06f508-d820-4a56-92eb-04d821c1f215
-function generate_data(; n, A, B, P, Q, seed)
-	
-	# We create a local RNG to make our results reproducable
-    rng = MersenneTwister(seed)
-
-    x_prev = zeros(2)
-
-    x = Vector{Vector{Float64}}(undef, n)
-    y = Vector{Vector{Float64}}(undef, n)
-
-    for i in 1:n
-        x[i] = rand(rng, MvNormal(A * x_prev, P))
-        y[i] = rand(rng, MvNormal(B * x[i], Q))
-
-        x_prev = x[i]
-    end
-   
     return x, y
 end
 
@@ -648,10 +653,11 @@ end
 # ╠═6f1ba6c5-9359-40a0-b069-7194dee87e14
 # ╠═f1cede2f-0e34-497b-9913-3204e9c75fd7
 # ╟─bbb878a0-1854-4bc4-9274-47edc8899795
+# ╟─5fc0ccdf-70e2-46ac-a77e-34f01b885dec
+# ╟─f1353252-62c4-4ec4-acea-bdfb18c747ae
+# ╠═87d0a5d1-743d-49a7-863e-fb3b795d72f3
 # ╟─9a8ce058-e7c3-4730-b4bd-b8782cead88f
 # ╠═e39f30bf-5b19-4743-9a0e-16cafeed8d13
-# ╟─b6c7d8e3-c8c4-4b39-8c53-cbcb5f046b9b
-# ╠═dd06f508-d820-4a56-92eb-04d821c1f215
 # ╟─210d41a9-a8ff-4c24-9b88-524bed03cd7f
 # ╠═3011f498-9319-4dee-ba30-342ae0a2dc07
 # ╟─7dcd84fd-c505-4f97-875d-49decba5c3f2
@@ -679,7 +685,7 @@ end
 # ╠═989923c9-6871-449f-91eb-d20db563d568
 # ╠═3beedf02-e870-4da9-89f4-a2667e5bee18
 # ╟─c082bbff-08ce-461e-a096-0df699a6f12d
-# ╠═4d3f9bdd-f89d-4fc4-924d-55008cd2c979
+# ╟─4d3f9bdd-f89d-4fc4-924d-55008cd2c979
 # ╠═10965ed2-da40-4b6c-80a8-2f84590803a8
 # ╠═fe122f6a-a30d-4fad-abf5-2c62cac09836
 # ╟─f8b90eeb-719f-456d-9fe5-d84fca13c65c
