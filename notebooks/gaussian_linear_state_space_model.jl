@@ -16,14 +16,24 @@ end
 # ╔═╡ d160581c-9d1f-11eb-05f7-c5f29954488b
 using Revise
 
-# ╔═╡ d215a164-b225-4d79-8411-c86c6135a25b
-using ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate();
+# ╔═╡ 95beaa74-12b5-4bf1-aeb1-a9e726c49cc9
+using DrWatson
 
-# ╔═╡ 7013d403-a24c-4b6b-b03a-c257acdf80c8
-using PlutoUI, Images
+# ╔═╡ 6f1ba6c5-9359-40a0-b069-7194dee87e14
+begin 
+	@quickactivate "ReactiveMPPaperExperiments"
+	using ReactiveMPPaperExperiments
+end
 
-# ╔═╡ 55c581b8-43af-4646-be06-bd64200f7e32
-using Rocket, ReactiveMP, GraphPPL, Distributions, Random, Plots
+# ╔═╡ f1cede2f-0e34-497b-9913-3204e9c75fd7
+begin
+	using PlutoUI, Images
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	if !in(:PlutoRunner, names(Main))
+		using PGFPlotsX
+		pgfplotsx()
+	end
+end
 
 # ╔═╡ bbb878a0-1854-4bc4-9274-47edc8899795
 md"""
@@ -44,7 +54,7 @@ We wil use the following model:
 
 In this model, we denote by $\mathbf{x}_k$ the current state of the system (at time step $k$), by $\mathbf{x}_{k - 1}$ the previous state at time $k-1$, $\mathbf{A}$ and $\mathbf{B}$ are a constant system inputs and $\mathbf{y}_k$ is a noisy observation of $\mathbf{x}_k$. We further assume that the states and the observations are corrupted by i.i.d. Gaussian noise with variances $\mathcal{P}$ and $\mathcal{Q}$ respectively.
 
-$(load("pictures/ssm_model.png"))
+$(load(projectdir("figures", "ssm_model.png")))
 
 The SSM can be represented by the following factor graph, where the pictured section is chained over time:
 
@@ -199,7 +209,7 @@ begin
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
-	ReactiveMPPaperExperiments.saveplot(p, "lgssm_smoothing_data")
+	@saveplot p "lgssm_smoothing_data"
 end
 
 # ╔═╡ 2530cf00-52c1-4c44-8d62-a3e4f0d411bc
@@ -283,7 +293,7 @@ begin
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
-	ReactiveMPPaperExperiments.saveplot(p, "lgssm_smoothing_inference")
+	@saveplot p "lgssm_smoothing_inference"
 end
 
 # ╔═╡ 1c6ee7dc-3ecc-43f6-a467-d21ef9c79b34
@@ -385,9 +395,6 @@ begin
 	)
 end;
 
-# ╔═╡ b6ce4477-5255-4bf8-b180-5faf6659f541
-
-
 # ╔═╡ 633bbd88-84d3-4d91-a2b6-e5e953171e45
 begin
 	A_filtering = [ 
@@ -437,7 +444,7 @@ begin
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
-	ReactiveMPPaperExperiments.saveplot(p, "lgssm_filtering_data")
+	@saveplot p "lgssm_filtering_data"
 end
 
 # ╔═╡ 952cce56-c832-47cc-95ec-6c0d114add79
@@ -484,7 +491,7 @@ begin
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
-	ReactiveMPPaperExperiments.saveplot(p, "lgssm_filtering_inference")
+	@saveplot p "lgssm_filtering_inference"
 end
 
 # ╔═╡ c082bbff-08ce-461e-a096-0df699a6f12d
@@ -494,9 +501,9 @@ Compared to the previous demo (smoothing), the state estimation algorithm in thi
 
 # ╔═╡ Cell order:
 # ╠═d160581c-9d1f-11eb-05f7-c5f29954488b
-# ╠═d215a164-b225-4d79-8411-c86c6135a25b
-# ╠═7013d403-a24c-4b6b-b03a-c257acdf80c8
-# ╠═55c581b8-43af-4646-be06-bd64200f7e32
+# ╠═95beaa74-12b5-4bf1-aeb1-a9e726c49cc9
+# ╠═6f1ba6c5-9359-40a0-b069-7194dee87e14
+# ╠═f1cede2f-0e34-497b-9913-3204e9c75fd7
 # ╟─bbb878a0-1854-4bc4-9274-47edc8899795
 # ╟─9a8ce058-e7c3-4730-b4bd-b8782cead88f
 # ╠═e39f30bf-5b19-4743-9a0e-16cafeed8d13
@@ -521,7 +528,6 @@ Compared to the previous demo (smoothing), the state estimation algorithm in thi
 # ╟─3bdd805a-913c-48ac-8fd7-da7ba9ac99bd
 # ╠═9b9b7b02-a8fa-4d67-8ace-bcd30663e312
 # ╠═b8dea87a-258a-4849-bb12-7e9b5d1420ae
-# ╠═b6ce4477-5255-4bf8-b180-5faf6659f541
 # ╠═633bbd88-84d3-4d91-a2b6-e5e953171e45
 # ╟─0ee27a13-39b5-4f4c-8153-51c132663e2e
 # ╠═ca8a7196-b573-4d72-8706-f0965e0f72d6

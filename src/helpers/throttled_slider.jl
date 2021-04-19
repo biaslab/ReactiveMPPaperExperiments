@@ -14,7 +14,7 @@ end
 `@bind x ThrottledSlider(1:10; default=8, show_value=true)`
 `@bind x ThrottledSlider(1:10; default=8, show_value=true, throttle = 50)`
 """
-function ThrottledSlider(range::AbstractRange; default=missing, show_value=false, throttle = 32) 
+function ThrottledSlider(range::AbstractRange; default=missing, show_value=true, throttle = 32) 
     return ThrottledSlider(range, (default === missing) ? first(range) : default, throttle, show_value)
 end
 
@@ -51,7 +51,7 @@ function Base.show(io::IO, ::MIME"text/html", slider::ThrottledSlider)
                 const dispatchEvent = () => {
                     sp.value = value
                     sp.dispatchEvent(new CustomEvent("input", {}))
-                    el.nextElementSibling.value = Number.isInteger(value) ? value : value.toPrecision(2)
+                    $(slider.show_value ? "el.nextElementSibling.value = Number.isInteger(value) ? value : value.toPrecision(2)" : "")
                 }
 
                 const debouncedEvent = _.throttle(dispatchEvent, $(slider.throttle))

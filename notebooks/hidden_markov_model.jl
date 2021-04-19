@@ -16,14 +16,24 @@ end
 # ╔═╡ a4affbe0-9d3d-11eb-1ca5-059daf3d3141
 using Revise
 
-# ╔═╡ 99b2fcde-0ad6-4388-9eea-e0200fb2615d
-using ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate();
+# ╔═╡ f1b341d4-d730-4f98-89d8-3337e6bc0ce1
+using DrWatson
 
-# ╔═╡ 74d2bcc7-2538-41eb-8937-b912d456f4bf
-using PlutoUI, Images
+# ╔═╡ f452267c-95cb-41ec-84e7-204a41487172
+begin 
+	@quickactivate "ReactiveMPPaperExperiments"
+	using ReactiveMPPaperExperiments
+end
 
-# ╔═╡ 9dfa1b26-1080-4432-b8f0-ef513f76bfd0
-using Rocket, ReactiveMP, GraphPPL, Distributions, Random, Plots
+# ╔═╡ 4a6a323b-4424-441c-9807-6707ea7ba410
+begin
+	using PlutoUI, Images
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	if !in(:PlutoRunner, names(Main))
+		using PGFPlotsX
+		pgfplotsx()
+	end
+end
 
 # ╔═╡ 83eb01c5-e383-4c8d-b187-12fc9dc87ecb
 md"""
@@ -367,9 +377,9 @@ On the left side we may see an estimated matrices $A$ and $B$. On the right ther
 
 # ╔═╡ Cell order:
 # ╠═a4affbe0-9d3d-11eb-1ca5-059daf3d3141
-# ╠═99b2fcde-0ad6-4388-9eea-e0200fb2615d
-# ╠═74d2bcc7-2538-41eb-8937-b912d456f4bf
-# ╠═9dfa1b26-1080-4432-b8f0-ef513f76bfd0
+# ╠═f1b341d4-d730-4f98-89d8-3337e6bc0ce1
+# ╠═f452267c-95cb-41ec-84e7-204a41487172
+# ╠═4a6a323b-4424-441c-9807-6707ea7ba410
 # ╟─83eb01c5-e383-4c8d-b187-12fc9dc87ecb
 # ╟─df0529bb-70fb-43b2-954d-838fe2165b76
 # ╠═5c14ef6a-9a9a-4fb6-9e11-90a61b878866

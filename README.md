@@ -19,3 +19,11 @@ To (locally) reproduce this project, do the following:
 
 This will install all necessary packages for you to be able to run the scripts and
 everything should work out of the box.
+
+# Notebooks
+
+All notebooks with code examples are present in `notebooks/` folder. Notebooks have been written with [`Pluto.jl`](https://github.com/fonsp/Pluto.jl) package. By default `Pluto` is added in `Project.toml`. To run and explore experiments go to `notebooks/` folder and use the following command:
+
+```bash
+julia -e 'import Pluto; Pluto.run()'
+```

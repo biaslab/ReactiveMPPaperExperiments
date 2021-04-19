@@ -16,14 +16,24 @@ end
 # ╔═╡ 5f80d3bc-9de9-11eb-1f38-af8cac91b6c0
 using Revise
 
-# ╔═╡ a8277fda-1712-43b7-81a9-285156dc3fea
-using ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate();
+# ╔═╡ 9e746f15-2336-4503-a480-a788f62e37f6
+using DrWatson
 
-# ╔═╡ 5f6ffd2d-c74f-4913-8561-5ea3aed1adbc
-using PlutoUI, Images
+# ╔═╡ 4f959e2f-db67-4cdf-b6a7-bc0e6eb56f21
+begin 
+	@quickactivate "ReactiveMPPaperExperiments"
+	using ReactiveMPPaperExperiments
+end
 
-# ╔═╡ 2ae27a12-c9e7-4e20-9810-283ad83bb029
-using Rocket, ReactiveMP, GraphPPL, Distributions, Random, Plots
+# ╔═╡ 1a6b8f2a-537e-44c0-90fe-afb57c2086f1
+begin
+	using PlutoUI, Images
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	if !in(:PlutoRunner, names(Main))
+		using PGFPlotsX
+		pgfplotsx()
+	end
+end
 
 # ╔═╡ 8b370073-4495-4181-9edc-379783091753
 md"""
@@ -241,9 +251,9 @@ end
 
 # ╔═╡ Cell order:
 # ╠═5f80d3bc-9de9-11eb-1f38-af8cac91b6c0
-# ╠═a8277fda-1712-43b7-81a9-285156dc3fea
-# ╠═5f6ffd2d-c74f-4913-8561-5ea3aed1adbc
-# ╠═2ae27a12-c9e7-4e20-9810-283ad83bb029
+# ╠═9e746f15-2336-4503-a480-a788f62e37f6
+# ╠═4f959e2f-db67-4cdf-b6a7-bc0e6eb56f21
+# ╠═1a6b8f2a-537e-44c0-90fe-afb57c2086f1
 # ╟─8b370073-4495-4181-9edc-379783091753
 # ╟─6418daac-7b3f-49e7-94d6-0e76abdcffac
 # ╠═caf7ceab-2e0d-4c16-ac63-66fbed3702d4

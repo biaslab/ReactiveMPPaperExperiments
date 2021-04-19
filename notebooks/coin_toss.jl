@@ -16,14 +16,24 @@ end
 # ╔═╡ dafb5428-9d09-11eb-1d29-b9cd53c89545
 using Revise
 
-# ╔═╡ dd08386e-a5e6-40ef-b7d1-1163ce3926a9
-using PlutoUI
+# ╔═╡ 2b6b67e0-bdd3-44d9-abc5-13482f0a1056
+using DrWatson
 
-# ╔═╡ 70f1e0a2-3f9c-42be-98e0-334c5abb08e7
-using Rocket, ReactiveMP, GraphPPL, Distributions, Random
+# ╔═╡ 2547289c-23e6-4f6b-beec-c3889a44d9ba
+begin
+	@quickactivate "ReactiveMPPaperExperiments"
+	using ReactiveMPPaperExperiments
+end
 
-# ╔═╡ 92d0e561-299c-478b-82a7-f22cf71d7fce
-import ReactiveMPPaperExperiments; ReactiveMPPaperExperiments.instantiate()
+# ╔═╡ 2a441550-27d1-4d02-870d-02cc9fdbba40
+begin
+	using PlutoUI, Images
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	if !in(:PlutoRunner, names(Main))
+		using PGFPlotsX
+		pgfplotsx()
+	end
+end
 
 # ╔═╡ f0d8d8a8-a881-4d83-b662-eec38dd732fd
 md"""
@@ -76,15 +86,15 @@ We will simulate coin toss process by sampling $n$ values from a Bernoulli distr
 
 # ╔═╡ 54a367e2-2a16-46a8-b3de-50c9e4f1827f
 # number of coin tosses
-@bind n Slider(1:1000, default = 500, show_value=true) 
+n_slider = @bind n ThrottledSlider(1:1000, default = 500) 
 
 # ╔═╡ baafcf7c-52b4-458e-8de7-24cf26986fae
 # p parameter of the Bernoulli distribution
-@bind p Slider(0.0:0.01:1.0, default = 0.5, show_value=true)
+p_slider = @bind p ThrottledSlider(0.0:0.01:1.0, default = 0.5)
 
 # ╔═╡ 6d5d5123-4465-49de-aa9e-0828055da982
 # Seed value used for data generation
-@bind seed Slider(1:1000, default = 42, show_value=true)
+seed_slider = @bind seed ThrottledSlider(1:1000, default = 42)
 
 # ╔═╡ 16c2aee7-61ba-4440-9326-a1483e8872d0
 begin 
@@ -99,6 +109,11 @@ Once we have defined our model, the next step is to use ReactiveMP.jl API to run
 We use `subscribe!` function from `Rocket.jl` to subscribe on updates and as soon as update is ready we simply save it in local variable which we return later as a result of the function.
 
 To pass observations to our model we use `update!` function. Inference engine will wait for all observations in the model and will react as soon as all of them have been passed. 
+"""
+
+# ╔═╡ 2797b5df-a3da-426d-bb53-d810721a817f
+md"""
+### Inference
 """
 
 # ╔═╡ 6e43fdb2-7b39-4f04-b526-e20976e9e3c9
@@ -116,26 +131,36 @@ end
 # ╔═╡ 1ab48849-070a-4e93-b6f8-88ebd012caf1
 estimated_θ = inference(dataset)
 
+# ╔═╡ 894a2168-ea45-4021-a08a-121fe590fd86
+md"""
+### Results
+
+|       |      |
+| ----- | ---- |
+| n     | $(n_slider)    |
+| p     | $(p_slider)    |
+| seed     | $(seed_slider)    |
+"""
+
 # ╔═╡ 081d2f7e-ac43-413e-9f65-932b3e959f11
 md"""
 Our `inference` function simply returns a posterior marginal distribution over θ parameter in our model. We can take a `mean` of that distribution to compare it with the real parameter used to generate data
 
-real = $(p)
-
-mean(estimated\_θ) = $(mean(estimated_θ))
-
-var(estimated\_θ) = $(var(estimated_θ))
-
-difference = $(abs(p - mean(estimated_θ)))
+|                        |                                           |
+| ---------------------- | ----------------------------------------- |
+| real_θ                 | $(round(p, digits = 4))                   |
+| mean(estimated\_θ)     | $(round(mean(estimated_θ), digits = 4))   |
+| var(estimated\_θ)      | $(round(var(estimated_θ), digits = 4))    |
+| difference             | $(round(abs(p - mean(estimated_θ)), digits = 4))    |
 
 As we can see θ parameter has been estimated correctly with a very high precision.
 """
 
 # ╔═╡ Cell order:
 # ╠═dafb5428-9d09-11eb-1d29-b9cd53c89545
-# ╠═92d0e561-299c-478b-82a7-f22cf71d7fce
-# ╠═dd08386e-a5e6-40ef-b7d1-1163ce3926a9
-# ╠═70f1e0a2-3f9c-42be-98e0-334c5abb08e7
+# ╠═2b6b67e0-bdd3-44d9-abc5-13482f0a1056
+# ╠═2547289c-23e6-4f6b-beec-c3889a44d9ba
+# ╠═2a441550-27d1-4d02-870d-02cc9fdbba40
 # ╟─f0d8d8a8-a881-4d83-b662-eec38dd732fd
 # ╟─f34341cb-f999-4df0-a0a4-856a4ec27dd2
 # ╠═1b61b60e-07fa-4217-85bb-f32128658188
@@ -146,6 +171,8 @@ As we can see θ parameter has been estimated correctly with a very high precisi
 # ╠═6d5d5123-4465-49de-aa9e-0828055da982
 # ╠═16c2aee7-61ba-4440-9326-a1483e8872d0
 # ╟─66612a6f-111d-496c-83ea-e6f0de30757f
+# ╟─2797b5df-a3da-426d-bb53-d810721a817f
 # ╠═6e43fdb2-7b39-4f04-b526-e20976e9e3c9
 # ╠═1ab48849-070a-4e93-b6f8-88ebd012caf1
+# ╟─894a2168-ea45-4021-a08a-121fe590fd86
 # ╟─081d2f7e-ac43-413e-9f65-932b3e959f11
