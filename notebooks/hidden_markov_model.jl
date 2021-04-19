@@ -29,6 +29,7 @@ end
 begin
 	using PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	using BenchmarkTools
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
@@ -46,8 +47,8 @@ We will use the following model:
 ```math
 \begin{equation}
   \begin{aligned}
-    \mathbf{s}_k & \sim \, \text{Cat}(\mathbf{A}\mathbf{s}_{k - 1})\\
-    \mathbf{x}_k & \sim \, \text{Cat}(\mathbf{B}\mathbf{s}_{k})\\
+    p(\mathbf{s}_k|\mathbf{s}_{k-1}) & = \, \text{Cat}(\mathbf{s}_k|\mathbf{A}\mathbf{s}_{k - 1})\\
+    p(\mathbf{x}_k|\mathbf{s}_k) & = \, \text{Cat}(\mathbf{x}_k|\mathbf{B}\mathbf{s}_{k})\\
   \end{aligned}
 \end{equation}
 ```
@@ -64,12 +65,12 @@ md"""
 
 # ╔═╡ 927a5ad7-7ac0-4e8a-a755-d1223093b992
 md"""
-GraphPPL.jl offer a model specification syntax that resembles closely to the mathematical equations defined above. We use `Transition` node for `Cat(Ax)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `x`.
+GraphPPL.jl offers a model specification syntax that resembles closely to the mathematical equations defined above. We use `Transition` node for `Cat(Ax)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `x`.
 """
 
 # ╔═╡ c01151b2-5476-4170-971c-518019e891f8
 md"""
-### Synthetic data generation
+### Data
 
 We will simulate hidden markov model process by sampling $n$ values from corresponding distributions with fixed A and B matrices. We also use a `seed` parameter to make our experiments reproducible.
 """
@@ -145,13 +146,17 @@ function generate_data(n_samples, A, B; seed = 124)
     return x, s
 end
 
+# ╔═╡ d02a557f-2ecb-4016-bd36-579c7e8bb012
+md"""
+### Interactivity 
+
+Pluto notebooks allow us to dynamically change some parameters and arguments for our experiments and to immediatelly see the results. We will create a set of sliders which we may want to use later.
+"""
+
 # ╔═╡ 1d23082e-ab18-4ca6-9383-aaebddb29f00
 begin
-	seed_slider = 
-		@bind(seed, ThrottledSlider(1:100, default = 41, show_value = true))
-	
-	n_slider = 
-		@bind(n, ThrottledSlider(2:100, default = 75, show_value = true))
+	seed_slider = @bind(seed, ThrottledSlider(1:100, default = 41))
+	n_slider    = @bind(n, ThrottledSlider(2:100, default = 75))
 end;
 
 # ╔═╡ f28c42fc-1e8a-4e3b-a0cf-73da0c7875cd
@@ -161,9 +166,6 @@ md"""
 | seed        | $(seed_slider)  |
 | n           | $(n_slider)     |
 """
-
-# ╔═╡ 56917bc7-dce2-4251-9997-6164a2c2f24f
-x, s = generate_data(n, A, B, seed = seed)
 
 # ╔═╡ dd0e02b4-e5c7-46eb-8a80-060d22e640b9
 md"""
@@ -228,9 +230,7 @@ Since this a approximate variational message passing results may differ dependin
 """
 
 # ╔═╡ ebcbb7a5-5fb5-4de9-bb93-ec3d9c6af031
-n_its_slider = @bind(
-	n_itr, ThrottledSlider(2:25, default = 15, show_value = true, throttle = 150)
-);
+n_its_slider = @bind(n_itr, ThrottledSlider(2:25, default = 15, throttle = 150));
 
 # ╔═╡ 010364bf-b778-4696-be41-8ccdeb3132d3
 md"""
@@ -245,6 +245,9 @@ md"""
 | n           | $(n_slider)      |
 | n_its       | $(n_its_slider)  |
 """
+
+# ╔═╡ 9697161a-ebfd-4071-8424-a0c5c83c9ce8
+x, s = generate_data(n, A, B, seed = seed)
 
 # ╔═╡ c9dd7f62-e02b-4b50-ae47-151b8772a899
 s_est, A_est, B_est, fe = inference(x, n_itr);
@@ -274,7 +277,7 @@ begin
 		)
 	end
 	
-	ReactiveMPPaperExperiments.saveplot(p, "hmm_fe")
+	@saveplot p "hmm_fe"
 end
 
 # ╔═╡ eeef9d32-805f-4958-aabb-b552430f2d4d
@@ -311,7 +314,7 @@ begin
 	p = plot!(p, range, s_estimated, ribbon = s_err, fillalpha = 0.2, label = "Estimated")
 	p = plot!(xlabel = "Iteration index", xguidefontsize = 8)
 	
-	ReactiveMPPaperExperiments.saveplot(p, "hmm_inference")
+	@saveplot p "hmm_inference"
 end
 
 # ╔═╡ c908eba5-8e36-416b-a2d7-3d994c454b85
@@ -364,8 +367,8 @@ begin
 		p1, p2, p3, p4, size = (500, 400), layout = @layout([ a b; c d ])
 	)
 	
-	ReactiveMPPaperExperiments.saveplot(plot(p1, p2), "hmm_A")
-	ReactiveMPPaperExperiments.saveplot(plot(p3, p4), "hmm_B")
+	@saveplot plot(p1, p2) "hmm_A"
+	@saveplot plot(p3, p4) "hmm_B"
 	
 	p
 end
@@ -374,6 +377,128 @@ end
 md"""
 On the left side we may see an estimated matrices $A$ and $B$. On the right there is a difference beetween real matrices and the estimated ones. We can see that the algorithm correctly predicted matrices $A$ and $B$ in our model with very small error.
 """
+
+# ╔═╡ 99869875-9699-4c3b-8ea1-8a4905ef260d
+md"""
+### Benchmarking
+
+In this section we will benchmark inference performance with the help of BenchmarkTools package. ReactiveMP.jl has been designed to be efficient and scalable as much as possible. To show ReactiveMP.jl performance capabilities we run a series of benchmark tests for hidden markov model with different number of observations.
+"""
+
+# ╔═╡ 30eb1c10-cd89-4304-abbe-08934a6dcdae
+function run_benchmark(params)
+	@unpack n, n_itr, seed = params
+	
+	# Transition probabilities (some transitions are impossible)
+    A = [0.9 0.0 0.1; 0.1 0.9 0.0; 0.0 0.1 0.9] 
+    # Observation noise
+    B = [0.9 0.05 0.05; 0.05 0.9 0.05; 0.05 0.05 0.9] 
+	
+	x, s           = generate_data(n, A, B, seed = seed)
+	s_, A_, B_, fe = inference(x, n_itr);
+	benchmark      = @benchmark inference($x, $n_itr);
+	
+	s_estimated = last(s_)
+	A_estimated = last(A_)
+	B_estimated = last(B_)
+	
+	output = 
+		@strdict n n_itr seed x s s_estimated A_estimated B_estimated fe benchmark
+	
+	return output
+end
+
+# ╔═╡ ec396167-5410-47f0-bd49-63d0e77f409c
+# Here we create a list of parameters we want to run our benchmarks with
+benchmark_allparams = dict_list(Dict(
+	"n"     => [ 50, 100, 250, 500, 1000, 2500, 5000, 10000 ],
+	"n_itr" => [ 5, 10, 15, 20, 25 ],
+	"seed"  => 42,
+));
+
+# ╔═╡ c6c92af2-5797-4d69-9dda-e07eb68ff359
+# First run maybe slow, you may track the progress in the terminal
+# Subsequent runs will not create a new benchmarks 
+# but will reload it from data folder
+hmm_benchmarks = map(benchmark_allparams) do params
+	path = datadir("benchmark", "hmm", "smoothing")
+	result, _ = produce_or_load(path, params, run_benchmark)
+	return result
+end;
+
+# ╔═╡ b0f8b89a-b4e4-4199-94c9-0b9a9fd06902
+target_n_itrs = [ 5, 15, 25 ]
+
+# ╔═╡ 6c3b504a-b8d6-41e2-8178-fc819a465f2b
+begin
+	local p = plot(
+		title = "Hidden Markov Model Benchmark (number of observations)",
+		titlefontsize = 10, legend = :bottomright,
+		xlabel = "Number of observations in dataset (log-scale)", 
+		xguidefontsize = 9,
+		ylabel = "Time (in ms, log-scale)", 
+		yguidefontsize = 9
+	)
+	
+	local mshapes = [ :utriangle, :diamond, :pentagon ]
+	
+	for (mshape, target_n_itr) in zip(mshapes, target_n_itrs)
+		local filtered = filter(hmm_benchmarks) do b
+			return b["n_itr"] === target_n_itr
+		end
+
+		local range      = map(f -> f["n"], filtered)
+		local benchmarks = map(f -> f["benchmark"], filtered)
+		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
+
+
+
+		p = plot!(
+			p, range, timings,
+			yscale = :log10, xscale = :log10,
+			markershape = mshape, label = "VMP n_itr = $(target_n_itr)"
+		)
+	end
+	
+	@saveplot p "hmm_benchmark_observations"
+end
+
+# ╔═╡ f2b495ab-f3fc-4e09-b0d9-33311c2d08f8
+target_ns = [ 50, 500, 5000 ]
+
+# ╔═╡ 2796dc7a-cd99-4f8e-89eb-89ea4e302813
+begin
+	local p = plot(
+		title = "Hidden Markov Model Benchmark (iterations)",
+		titlefontsize = 10, legend = :bottomright,
+		xlabel = "Number of performed VMP iterations (log-scale)", 
+		xguidefontsize = 9,
+		ylabel = "Time (in ms, log-scale)", 
+		yguidefontsize = 9
+	)
+	
+	local mshapes = [ :utriangle, :diamond, :pentagon ]
+	
+	for (mshape, target_n) in zip(mshapes, target_ns)
+		local filtered = filter(hmm_benchmarks) do b
+			return b["n"] === target_n
+		end
+
+		local range      = map(f -> f["n_itr"], filtered)
+		local benchmarks = map(f -> f["benchmark"], filtered)
+		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
+		local ylim       = (1e0, 10maximum(timings))
+
+
+		p = plot!(
+			p, range, timings,
+			yscale = :log10, xscale = :log10,
+			markershape = mshape, label = "n_observations = $(target_n)", ylim = ylim
+		)
+	end
+	
+	@saveplot p "hmm_benchmark_iterations"
+end
 
 # ╔═╡ Cell order:
 # ╠═a4affbe0-9d3d-11eb-1ca5-059daf3d3141
@@ -389,15 +514,16 @@ On the left side we may see an estimated matrices $A$ and $B$. On the right ther
 # ╠═9e84c744-5157-4e7c-b910-481f8b6e086c
 # ╠═30f46dae-6665-4bbc-9451-ee6744c5a6aa
 # ╠═34ef9070-dc89-4a56-8914-b3c8bd3288ba
+# ╟─d02a557f-2ecb-4016-bd36-579c7e8bb012
 # ╠═1d23082e-ab18-4ca6-9383-aaebddb29f00
 # ╟─f28c42fc-1e8a-4e3b-a0cf-73da0c7875cd
-# ╠═56917bc7-dce2-4251-9997-6164a2c2f24f
 # ╟─dd0e02b4-e5c7-46eb-8a80-060d22e640b9
 # ╠═3866d103-7f73-4ff1-8949-20ab0cfd3704
 # ╟─31f009ba-fb29-4633-b3a6-56e10544126a
 # ╠═ebcbb7a5-5fb5-4de9-bb93-ec3d9c6af031
 # ╟─010364bf-b778-4696-be41-8ccdeb3132d3
 # ╟─f267254c-84f8-4b67-b5c7-1dfabda12e3d
+# ╠═9697161a-ebfd-4071-8424-a0c5c83c9ce8
 # ╠═c9dd7f62-e02b-4b50-ae47-151b8772a899
 # ╟─5b60460c-5f93-41b5-b44b-820523098385
 # ╟─eeef9d32-805f-4958-aabb-b552430f2d4d
@@ -407,3 +533,11 @@ On the left side we may see an estimated matrices $A$ and $B$. On the right ther
 # ╟─c908eba5-8e36-416b-a2d7-3d994c454b85
 # ╟─74924c8e-7141-4e0d-aaa6-78732726498e
 # ╟─ff8aa1bb-300d-471f-b260-25b477366e22
+# ╟─99869875-9699-4c3b-8ea1-8a4905ef260d
+# ╠═30eb1c10-cd89-4304-abbe-08934a6dcdae
+# ╠═ec396167-5410-47f0-bd49-63d0e77f409c
+# ╠═c6c92af2-5797-4d69-9dda-e07eb68ff359
+# ╠═b0f8b89a-b4e4-4199-94c9-0b9a9fd06902
+# ╟─6c3b504a-b8d6-41e2-8178-fc819a465f2b
+# ╠═f2b495ab-f3fc-4e09-b0d9-33311c2d08f8
+# ╟─2796dc7a-cd99-4f8e-89eb-89ea4e302813

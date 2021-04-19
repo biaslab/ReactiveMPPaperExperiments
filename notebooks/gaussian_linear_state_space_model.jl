@@ -47,8 +47,8 @@ We wil use the following model:
 ```math
 \begin{equation}
   \begin{aligned}
-    \mathbf{x}_k & \sim \, \mathcal{N}(\mathbf{A}\mathbf{x}_{k - 1}, \mathcal{P}) \\
-    \mathbf{y}_k & \sim \, \mathcal{N}(\mathbf{B}\mathbf{x}_{k}, \mathcal{Q}) \\
+    p(\mathbf{x}_k|\mathbf{x}_{k - 1}) & = \, \mathcal{N}(\mathbf{x}_k|\mathbf{A}\mathbf{x}_{k - 1}, \mathcal{P}) \\
+    p(\mathbf{y}_k|\mathbf{x}_k) & = \, \mathcal{N}(\mathbf{y}_k|\mathbf{B}\mathbf{x}_{k}, \mathcal{Q}) \\
   \end{aligned}
 \end{equation}
 ```
@@ -126,8 +126,15 @@ md"""
     return x, y
 end
 
+# ╔═╡ 65e339e3-a90d-47b6-b5f2-b60addc93791
+md"""
+GraphPPL.jl offers a model specification syntax that resembles closely to the mathematical equations defined above. We use `MvGaussianMeanCovariance` node for `N(mean, covariance)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `y`.
+"""
+
 # ╔═╡ 210d41a9-a8ff-4c24-9b88-524bed03cd7f
 md"""
+### Interactivity
+
 Pluto allows us to interactively explore and experiment with our models. Here we will create a set of sliders for later use. These sliders will allow us to dinamicaly change our model and data generation parameters and see changes immediatelly.
 """
 
@@ -151,9 +158,7 @@ end;
 
 # ╔═╡ 7dcd84fd-c505-4f97-875d-49decba5c3f2
 md"""
-### Synthetic data
-
-Lets first see how our data look like. We plot an individual line for each dimension in our dataset. To make it uncluttered we generate 2-dimensional observations with rotation matrix as a transition matrix with θ parameter which represents rotation angle
+Lets first see how our synthetic data look like. We plot an individual line for each dimension in our dataset. To make it uncluttered we generate 2-dimensional observations with rotation matrix as a transition matrix with θ parameter which represents rotation angle
 """
 
 # ╔═╡ ebc733ef-6638-4e42-a007-f2464ce3b5cf
@@ -644,7 +649,7 @@ begin
 		markershape = :diamond, label = "Filtering"
 	)
 	
-	@saveplot p "lgssm_smoothing_benchmark"
+	@saveplot p "lgssm_benchmark"
 end
 
 # ╔═╡ Cell order:
@@ -658,6 +663,7 @@ end
 # ╠═87d0a5d1-743d-49a7-863e-fb3b795d72f3
 # ╟─9a8ce058-e7c3-4730-b4bd-b8782cead88f
 # ╠═e39f30bf-5b19-4743-9a0e-16cafeed8d13
+# ╟─65e339e3-a90d-47b6-b5f2-b60addc93791
 # ╟─210d41a9-a8ff-4c24-9b88-524bed03cd7f
 # ╠═3011f498-9319-4dee-ba30-342ae0a2dc07
 # ╟─7dcd84fd-c505-4f97-875d-49decba5c3f2
