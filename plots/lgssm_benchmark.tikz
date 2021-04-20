@@ -1,0 +1,40 @@
+\begin{tikzpicture}[/tikz/background rectangle/.style={fill={rgb,1:red,1.0;green,1.0;blue,1.0}, draw opacity={1.0}}, show background rectangle]
+\begin{axis}[point meta max={nan}, point meta min={nan}, legend cell align={left}, title={Linear Gaussian State Space Model Benchmark}, title style={at={{(0.5,1)}}, anchor={south}, font={{\fontsize{10 pt}{13.0 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, legend style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid, fill={rgb,1:red,1.0;green,1.0;blue,1.0}, fill opacity={1.0}, text opacity={1.0}, font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, text={rgb,1:red,0.0;green,0.0;blue,0.0}, at={(0.98, 0.02)}, anchor={south east}}, axis background/.style={fill={rgb,1:red,1.0;green,1.0;blue,1.0}, opacity={1.0}}, anchor={north west}, xshift={1.0mm}, yshift={-1.0mm}, width={150.4mm}, height={99.6mm}, scaled x ticks={false}, xlabel={Number of observations in dataset (log-scale)}, x tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, x tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, xlabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, xmode={log}, log basis x={10}, xmajorgrids={true}, xmin={42.65197092310813}, xmax={11722.787697229449}, xtick={{100.0,316.22776601683796,1000.0,3162.2776601683795,10000.0}}, xticklabels={{$10^{2.0}$,$10^{2.5}$,$10^{3.0}$,$10^{3.5}$,$10^{4.0}$}}, xtick align={inside}, xticklabel style={font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, x grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis x line*={left}, x axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, scaled y ticks={false}, ylabel={Time (in ms, log-scale)}, y tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, y tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, ylabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, ymode={log}, log basis y={10}, ymajorgrids={true}, ymin={3.0221341547430542}, ymax={4551.926272199128}, ytick={{3.1622776601683795,10.0,31.622776601683793,100.0,316.22776601683796,1000.0,3162.2776601683795}}, yticklabels={{$10^{0.5}$,$10^{1.0}$,$10^{1.5}$,$10^{2.0}$,$10^{2.5}$,$10^{3.0}$,$10^{3.5}$}}, ytick align={inside}, yticklabel style={font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, y grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis y line*={left}, y axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}]
+    \addplot[color={rgb,1:red,0.0;green,0.6056;blue,0.9787}, name path={e4e8b964-5bcc-409d-8de6-85e35652724a}, draw opacity={1.0}, line width={1}, solid, mark={triangle*}, mark size={3.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.6056;blue,0.9787}, fill opacity={1.0}, line width={0.75}, rotate={0}, solid}]
+        table[row sep={\\}]
+        {
+            \\
+            50.0  7.590161  \\
+            100.0  16.012786  \\
+            250.0  42.802852  \\
+            500.0  94.320004  \\
+            750.0  171.146026  \\
+            1000.0  223.137329  \\
+            1500.0  336.144711  \\
+            2000.0  570.242298  \\
+            2500.0  736.084795  \\
+            5000.0  1524.968771  \\
+            10000.0  3700.455426  \\
+        }
+        ;
+    \addlegendentry {Smoothing}
+    \addplot[color={rgb,1:red,0.8889;green,0.4356;blue,0.2781}, name path={c6736c1e-0ffd-41fc-8232-3fc0e8aacd74}, draw opacity={1.0}, line width={1}, solid, mark={diamond*}, mark size={3.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.8889;green,0.4356;blue,0.2781}, fill opacity={1.0}, line width={0.75}, rotate={0}, solid}]
+        table[row sep={\\}]
+        {
+            \\
+            50.0  3.717524  \\
+            100.0  7.398813  \\
+            250.0  18.333187  \\
+            500.0  36.558282  \\
+            750.0  54.660348  \\
+            1000.0  74.166813  \\
+            1500.0  111.102321  \\
+            2000.0  152.539495  \\
+            2500.0  208.241566  \\
+            5000.0  427.410063  \\
+            10000.0  889.850111  \\
+        }
+        ;
+    \addlegendentry {Filtering}
+\end{axis}
+\end{tikzpicture}

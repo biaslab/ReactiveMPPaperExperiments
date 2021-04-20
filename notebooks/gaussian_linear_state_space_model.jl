@@ -549,7 +549,7 @@ function run_benchmark(inference_fn::Function, params)
 		seed = seed
 	)
 	
-	x_estimated, bfe = inference_full_graph(y, A, B, P, Q);
+	x_estimated, bfe = inference_fn(y, A, B, P, Q);
 	benchmark        = @benchmark $inference_fn($y, $A, $B, $P, $Q)
 	
 	output = @strdict n seed θ x_estimated bfe benchmark
@@ -572,7 +572,7 @@ We want to perform benchmarking for different sets of parameters. In principal, 
 
 # ╔═╡ 425cccc7-6a38-477b-a128-7a513b056e4c
 # First run maybe slow, you may track the progress in the terminal
-# Subsequent runs will not create a new benchmarks 
+# Subsequent runs will not create new benchmarks 
 # but will reload it from data folder
 smoothing_benchmarks = map(benchmark_allparams) do params
 	path = datadir("benchmark", "lgssm", "smoothing")
@@ -584,7 +584,7 @@ end;
 
 # ╔═╡ d38bc0a0-3fde-4d71-aa4c-11a83532fc05
 # First run maybe slow, you may track the progress in the terminal
-# Subsequent runs will not create a new benchmarks 
+# Subsequent runs will not create aew benchmarks 
 # but will reload it from data folder
 filtering_benchmarks = map(benchmark_allparams) do params
 	path = datadir("benchmark", "lgssm", "filtering")
@@ -652,6 +652,167 @@ begin
 	@saveplot p "lgssm_benchmark"
 end
 
+# ╔═╡ aa64496d-a65c-4b38-88b6-b5f9f14c447d
+md"""
+### Comparison with Turing.jl
+
+In this section we want to compare results and performance of ReactiveMP.jl with another probabilistic programming library which is called Turing.jl. Turing is a general probabilistic programming toolbox and does not use message passing for inference procedure, but sampling. Message passing has an advantage over sampling approach for conjugate models (which our linear gaussian state space model is) because it may fallback to analytically tractable update rules, where sampling cannot. 
+"""
+
+# ╔═╡ 0bd929eb-0a4d-4a09-82f6-e87d992cd98b
+import Turing
+
+# ╔═╡ f380961f-1d2b-4032-86b8-721d2ba821b6
+Turing.@model LinearGaussianSSM(y, A, B, P, Q) = begin
+    n = length(y)
+
+    # State sequence.
+    x = Vector(undef, n)
+
+    # Observe each point of the input.
+    x[1] ~ MvNormal([ 0.0, 0.0 ], 1e1)
+    y[1] ~ MvNormal(B * x[1], Q)
+
+    for t in 2:n
+        x[t] ~ MvNormal(A * x[t - 1], P)
+        y[t] ~ MvNormal(B * x[t], Q)
+    end
+end;
+
+# ╔═╡ 1fbb51a2-c8f6-4c4b-9fd0-f42884a091c6
+begin
+	seed_turing = 42
+	n_turing    = 50
+	θ_turing    = π / 12
+	
+	A_turing = [ 
+		cos(θ_turing) -sin(θ_turing); 
+		sin(θ_turing) cos(θ_turing) 
+	]
+	B_turing = [ 1.3 0.0; 0.0 0.7 ]
+	P_turing = [ 1.0 0.0; 0.0 1.0 ]
+	Q_turing = [ 1.0 0.0; 0.0 1.0 ]
+	
+	x_turing, y_turing = generate_data(
+		n    = n_turing, 
+		A    = A_turing, 
+		B    = B_turing, 
+		P    = P_turing, 
+		Q    = Q_turing, 
+		seed = seed_turing
+	)
+end;
+
+# ╔═╡ 1fd698ae-d6a3-4b36-b1e5-80cb5fcd0771
+md"""
+We use Turing's builtin HMC sampler to perform inference on this model because we want to obtain minus log\_density as a metric for our model.
+"""
+
+# ╔═╡ c0b48a41-703d-4d50-bbb3-545117189c9f
+function inference_turing(observations, A, B, P, Q; nsamples = 250, seed = 42)
+	rng = MersenneTwister(seed)
+    return Turing.sample(rng, 
+		LinearGaussianSSM(observations, A, B, P, Q), Turing.HMC(0.1, 10), 
+		nsamples
+	)
+end
+
+# ╔═╡ 753d9f01-02bd-4a0b-ac69-77218ac56530
+x_turing_estimated = inference_turing(
+	y_turing, A_turing, B_turing, P_turing, Q_turing
+);
+
+# ╔═╡ 43649fce-8ee4-42a9-819b-ba17fa9de998
+begin 
+	local reshape_data = (data) -> transpose(reduce(hcat, data))
+	local reshape_turing_data = (data) -> transpose(
+		reshape(data, (2, Int(length(data) / 2)))
+	)
+	
+	local ylimit = (-20, 20)
+	
+	local x_label = [ "x[:, 1]" "x[:, 2]" ]
+	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
+	local i_label = [ "inferred[:, 1]" "inferred[:, 2]" ]
+	
+	local x_reshaped = x_turing |> reshape_data
+	local y_reshaped = y_turing |> reshape_data
+	
+	local samples = get(x_turing_estimated, :x)
+	local x_inferred_means = reshape_turing_data(
+		[ mean(samples.x[i].data) for i in 1:2n_turing ]
+	)
+	local x_inferred_stds = reshape_turing_data(
+		[std(samples.x[i].data) for i in 1:2n_turing]
+	)
+	
+	local p = plot(
+		title = "Turing HMC inference results", titlefontsize = 10,
+		xlabel = "Time step k", xguidefontsize = 8,
+		ylabel = "Latent states values", yguidefonrsize = 8
+	)
+	local range = 1:n_turing
+	
+	p = plot!(p, range, x_reshaped, label = x_label)
+	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
+	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
+	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	
+	@saveplot p "lgssm_turing_inference"
+end
+
+# ╔═╡ 1751a9f2-2a5f-4cd7-8f0d-d5a3cae5518f
+function run_turing_benchmark(params)
+	@unpack n, seed, θ, nsamples = params
+	
+	A = [ 
+		cos(θ) -sin(θ); 
+		sin(θ) cos(θ) 
+	]
+	B = [ 1.3 0.0; 0.0 0.7 ]
+	P = [ 1.0 0.0; 0.0 1.0 ]
+	Q = [ 1.0 0.0; 0.0 1.0 ]
+	
+	x, y = generate_data(
+		n    = n, 
+		A    = A, 
+		B    = B, 
+		P    = P, 
+		Q    = Q, 
+		seed = seed
+	)
+	
+	x_estimated = inference_turing(y, A, B, P, Q, nsamples = nsamples);
+	benchmark   = @benchmark inference_turing(
+		$y, $A, $B, $P, $Q, nsamples = $nsamples
+	)
+	
+	output = @strdict n seed θ nsamples x_estimated benchmark
+	
+	return output
+end
+
+# ╔═╡ c41e8630-767a-4072-80a7-5ef8c5ecc4e0
+# Here we create a list of parameters we want to run our benchmarks with
+benchmark_allparams_test = dict_list(Dict(
+	"n"        => [ 50, 100, 500, 1000, 2500, 5000, 10000 ],
+	"seed"     => 42,
+	"θ"        => π / 12,
+	"nsamples" => [ 250, 500 ]
+));
+
+# ╔═╡ f9436160-034a-455d-8489-ba80107932f7
+# First run maybe slow, you may track the progress in the terminal
+# Subsequent runs will not create new benchmarks 
+# but will reload it from data folder
+turing_benchmarks = map(benchmark_allparams_test) do params
+	path = datadir("benchmark", "lgssm", "turing")
+	result, _ = produce_or_load(path, params) do p
+		run_turing_benchmark(p)
+	end
+	return result
+end;
+
 # ╔═╡ Cell order:
 # ╠═d160581c-9d1f-11eb-05f7-c5f29954488b
 # ╠═95beaa74-12b5-4bf1-aeb1-a9e726c49cc9
@@ -689,7 +850,7 @@ end
 # ╟─b006a807-016d-41aa-91ec-a02a4c270990
 # ╟─952cce56-c832-47cc-95ec-6c0d114add79
 # ╠═989923c9-6871-449f-91eb-d20db563d568
-# ╠═3beedf02-e870-4da9-89f4-a2667e5bee18
+# ╟─3beedf02-e870-4da9-89f4-a2667e5bee18
 # ╟─c082bbff-08ce-461e-a096-0df699a6f12d
 # ╟─4d3f9bdd-f89d-4fc4-924d-55008cd2c979
 # ╠═10965ed2-da40-4b6c-80a8-2f84590803a8
@@ -701,3 +862,14 @@ end
 # ╠═a4abc2be-034b-44d9-b78d-2d889ebe0acb
 # ╟─653dafb5-173d-40f7-93b3-ae4fbfb5d0d6
 # ╟─d485a985-39ec-422b-9476-d55b98786093
+# ╟─aa64496d-a65c-4b38-88b6-b5f9f14c447d
+# ╠═0bd929eb-0a4d-4a09-82f6-e87d992cd98b
+# ╠═f380961f-1d2b-4032-86b8-721d2ba821b6
+# ╠═1fbb51a2-c8f6-4c4b-9fd0-f42884a091c6
+# ╟─1fd698ae-d6a3-4b36-b1e5-80cb5fcd0771
+# ╠═c0b48a41-703d-4d50-bbb3-545117189c9f
+# ╠═753d9f01-02bd-4a0b-ac69-77218ac56530
+# ╟─43649fce-8ee4-42a9-819b-ba17fa9de998
+# ╠═1751a9f2-2a5f-4cd7-8f0d-d5a3cae5518f
+# ╠═c41e8630-767a-4072-80a7-5ef8c5ecc4e0
+# ╠═f9436160-034a-455d-8489-ba80107932f7
