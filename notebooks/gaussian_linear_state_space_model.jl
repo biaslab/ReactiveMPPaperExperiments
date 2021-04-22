@@ -596,8 +596,8 @@ end;
 
 # ╔═╡ f9491325-a06a-47ca-af5a-b55077596730
 begin 
-	target_seed = 123
-	target_θ = π / 24
+	target_seed = 42
+	target_θ = π / 12
 end;
 
 # ╔═╡ 5b0c1a35-b06f-43d4-b255-a1ab045de83c
@@ -661,7 +661,7 @@ We can see from benchmark results execution time scales linearly with the number
 
 # ╔═╡ 653dafb5-173d-40f7-93b3-ae4fbfb5d0d6
 md"""
-Lets also plot benchmark timings for both smoothing and filtering algorithms against number of observation.
+Lets also plot benchmark timings for both smoothing and filtering algorithms against number of observation. Notice that we use a log scale axis to have a linear-like plot.
 """
 
 # ╔═╡ d485a985-39ec-422b-9476-d55b98786093
@@ -872,6 +872,109 @@ turing_benchmarks = map(benchmark_allparams_turing) do params
 	return result
 end;
 
+# ╔═╡ d6253937-b32e-4c6d-a0a1-8eb35afe92c5
+md"""
+Here we compare `Turing.jl` performance results agains smoothing algorithm in `ReactiveMP.jl`. We can see that `ReactiveMP.jl` outperforms `Turing.jl` significantly. It is worth noting that this model contains many conjugate prior and likelihood pairings that lead to analytically computable Bayesian posteriors. For these types of models, ReactiveMP.jl takes advantage of the conjugate pairings and beats general-purpose probabilistic programming packages like Turing.jl easily in terms of computational load, speed, memory and accuracy. On the other hand, Turing.jl is currently still capable of running inference for a broader set of models.
+"""
+
+# ╔═╡ 97855300-b472-404c-b5f7-daa5f908e34b
+begin
+	local path_turing    = datadir("benchmark", "lgssm", "turing")
+	local path_smoothing = datadir("benchmark", "lgssm", "smoothing")
+	
+	local white_list   = [ "n", "seed", "θ" ]
+	local special_list = [
+		:min => (data) -> string(
+			round(minimum(data["benchmark"]).time / 1_000_000_000, digits = 3), "s"
+		),
+		:mean => (data) -> string(
+			round(mean(data["benchmark"]).time / 1_000_000_000, digits = 3), "s"
+		),
+	]
+	
+	local df_turing = collect_results(path_turing, 
+		white_list = [ white_list... , "nsamples" ],
+		special_list = special_list
+	)
+	
+	local df_smoothing = collect_results(path_smoothing, 
+		white_list = white_list,
+		special_list = special_list
+	)
+	
+	local query_turing = @from row in df_turing begin
+		@where row.seed == target_seed && row.θ == target_θ && row.nsamples == 500
+		@orderby ascending(row.n)
+		@select { row.n, row.min, row.mean }
+	end
+	
+	local query_smoothing = @from row in df_smoothing begin
+		@where row.seed == target_seed && row.θ == target_θ
+		@orderby ascending(row.n)
+		@select { row.n, row.min, row.mean }
+	end
+	
+	local res_turing    = DataFrame(query_turing)
+	local res_smoothing = DataFrame(query_smoothing)
+	
+	
+	local df = rightjoin(res_turing, res_smoothing, on = :n, makeunique = true)
+	
+	df = rename(df, 
+		:min => :min_turing, :mean => :mean_turing,
+		:min_1 => :min_smoothing, :mean_1 => :mean_smoothing
+	) |> @dropna() |> DataFrame
+end
+
+# ╔═╡ 6b572117-9b58-41c5-a507-4f9e38de9db9
+begin
+	local s_filtered = filter(smoothing_benchmarks) do b
+		return b["θ"] === target_θ && b["seed"] === target_seed
+	end
+	
+	local t_filtered = filter(turing_benchmarks) do b
+		return b["θ"] === target_θ && 
+			b["seed"] === target_seed && 
+			b["nsamples"] === 500
+	end
+	
+	@assert length(s_filtered) !== 0 "Empty benchmark set"
+	@assert length(t_filtered) !== 0 "Empty benchmark set"
+	
+	local s_range      = map(f -> f["n"], s_filtered)
+	local s_benchmarks = map(f -> f["benchmark"], s_filtered)
+	local s_timings    = map(t -> t.time, minimum.(s_benchmarks)) ./ 1_000_000
+	local s_memories   = map(t -> t.memory, minimum.(s_benchmarks)) ./ 1024
+	
+	local t_range      = map(f -> f["n"], t_filtered)
+	local t_benchmarks = map(f -> f["benchmark"], t_filtered)
+	local t_timings    = map(t -> t.time, minimum.(t_benchmarks)) ./ 1_000_000
+	local t_memories   = map(t -> t.memory, minimum.(t_benchmarks)) ./ 1024
+	
+	local p = plot(
+		title = "Linear Gaussian State Space Model Benchmark",
+		titlefontsize = 10, legend = :bottomright,
+		xlabel = "Number of observations in dataset (log-scale)", 
+		xguidefontsize = 9,
+		ylabel = "Time (in ms, log-scale)", 
+		yguidefontsize = 9
+	)
+	
+	p = plot!(
+		p, s_range, s_timings, 
+		yscale = :log10, xscale = :log10,
+		markershape = :utriangle, label = "Smoothing ReactiveMP"
+	)
+	
+	p = plot!(
+		p, t_range, t_timings, 
+		yscale = :log10, xscale = :log10,
+		markershape = :diamond, label = "HMC Turing"
+	)
+	
+	@saveplot p "lgssm_benchmark_turing"
+end
+
 # ╔═╡ Cell order:
 # ╠═d160581c-9d1f-11eb-05f7-c5f29954488b
 # ╠═95beaa74-12b5-4bf1-aeb1-a9e726c49cc9
@@ -934,3 +1037,6 @@ end;
 # ╠═1751a9f2-2a5f-4cd7-8f0d-d5a3cae5518f
 # ╠═c41e8630-767a-4072-80a7-5ef8c5ecc4e0
 # ╠═f9436160-034a-455d-8489-ba80107932f7
+# ╟─d6253937-b32e-4c6d-a0a1-8eb35afe92c5
+# ╟─97855300-b472-404c-b5f7-daa5f908e34b
+# ╟─6b572117-9b58-41c5-a507-4f9e38de9db9
