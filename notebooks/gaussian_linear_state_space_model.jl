@@ -29,7 +29,7 @@ end
 begin
 	using PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
-	using BenchmarkTools, DataFrames
+	using BenchmarkTools, DataFrames, Query
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
@@ -594,15 +594,74 @@ filtering_benchmarks = map(benchmark_allparams) do params
 	return result
 end;
 
-# ╔═╡ 4ab06bc1-15b1-4d80-9b19-93fc09c1fbc6
-target_seed = 123
+# ╔═╡ f9491325-a06a-47ca-af5a-b55077596730
+begin 
+	target_seed = 123
+	target_θ = π / 24
+end;
 
-# ╔═╡ a4abc2be-034b-44d9-b78d-2d889ebe0acb
-target_θ = π / 24
+# ╔═╡ 5b0c1a35-b06f-43d4-b255-a1ab045de83c
+md"""
+Here we extract benchmarking results in a `DataFrame` table for seed = $(target_seed) and θ = $(round(target_θ, digits = 2))
+"""
+
+# ╔═╡ 3bf227ef-5390-4002-8285-5cabd8a50ec5
+begin
+	local path_filtering = datadir("benchmark", "lgssm", "filtering")
+	local path_smoothing = datadir("benchmark", "lgssm", "smoothing")
+	
+	local white_list   = [ "n", "seed", "θ" ]
+	local special_list = [
+		:min => (data) -> string(
+			round(minimum(data["benchmark"]).time / 1_000_000, digits = 2), "ms"
+		),
+		:mean => (data) -> string(
+			round(mean(data["benchmark"]).time / 1_000_000, digits = 2), "ms"
+		)
+	]
+	
+	local df_filtering = collect_results(path_filtering, 
+		white_list = white_list,
+		special_list = special_list
+	)
+	
+	local df_smoothing = collect_results(path_smoothing, 
+		white_list = white_list,
+		special_list = special_list
+	)
+	
+	local query_filtering = @from row in df_filtering begin
+		@where row.seed == target_seed && row.θ == target_θ
+		@orderby ascending(row.n)
+		@select { row.n, row.min, row.mean }
+	end
+	
+	local query_smoothing = @from row in df_smoothing begin
+		@where row.seed == target_seed && row.θ == target_θ
+		@orderby ascending(row.n)
+		@select { row.n, row.min, row.mean }
+	end
+	
+	local res_filtering = DataFrame(query_filtering)
+	local res_smoothing = DataFrame(query_smoothing)
+	
+	
+	local df = rightjoin(res_filtering, res_smoothing, on = :n, makeunique = true)
+	
+	df = rename(df, 
+		:min => :min_filtering, :mean => :mean_filtering,
+		:min_1 => :min_smoothing, :mean_1 => :mean_smoothing
+	)
+end
+
+# ╔═╡ 4871b82d-15db-4c80-9b95-7f2c8086b864
+md"""
+We can see from benchmark results execution time scales linearly with the number of observations. Moreover we see that filtering as roughly twice faster as smoothing. This is in line with expectations because smoothing does both forward and backward passes, while filtering does only forward and hence should be 2x times faster.
+"""
 
 # ╔═╡ 653dafb5-173d-40f7-93b3-ae4fbfb5d0d6
 md"""
-Here we plot benchmark timings for smoothing algorithm against number of observation. As we can see from benchmark results execution time scales linearly with the number of observations. Moreover we see that filtering as roughly twice faster as smoothing. This is in line with expectations because smoothing does both forward and backward passes, while filtering does onle forward.
+Lets also plot benchmark timings for both smoothing and filtering algorithms against number of observation.
 """
 
 # ╔═╡ d485a985-39ec-422b-9476-d55b98786093
@@ -794,8 +853,8 @@ end
 
 # ╔═╡ c41e8630-767a-4072-80a7-5ef8c5ecc4e0
 # Here we create a list of parameters we want to run our benchmarks with
-benchmark_allparams_test = dict_list(Dict(
-	"n"        => [ 50, 100, 500, 1000, 2500, 5000, 10000 ],
+benchmark_allparams_turing = dict_list(Dict(
+	"n"        => [ 50, 100, 500, 1000 ],
 	"seed"     => 42,
 	"θ"        => π / 12,
 	"nsamples" => [ 250, 500 ]
@@ -805,7 +864,7 @@ benchmark_allparams_test = dict_list(Dict(
 # First run maybe slow, you may track the progress in the terminal
 # Subsequent runs will not create new benchmarks 
 # but will reload it from data folder
-turing_benchmarks = map(benchmark_allparams_test) do params
+turing_benchmarks = map(benchmark_allparams_turing) do params
 	path = datadir("benchmark", "lgssm", "turing")
 	result, _ = produce_or_load(path, params) do p
 		run_turing_benchmark(p)
@@ -858,8 +917,10 @@ end;
 # ╟─f8b90eeb-719f-456d-9fe5-d84fca13c65c
 # ╠═425cccc7-6a38-477b-a128-7a513b056e4c
 # ╠═d38bc0a0-3fde-4d71-aa4c-11a83532fc05
-# ╠═4ab06bc1-15b1-4d80-9b19-93fc09c1fbc6
-# ╠═a4abc2be-034b-44d9-b78d-2d889ebe0acb
+# ╠═f9491325-a06a-47ca-af5a-b55077596730
+# ╟─5b0c1a35-b06f-43d4-b255-a1ab045de83c
+# ╟─3bf227ef-5390-4002-8285-5cabd8a50ec5
+# ╟─4871b82d-15db-4c80-9b95-7f2c8086b864
 # ╟─653dafb5-173d-40f7-93b3-ae4fbfb5d0d6
 # ╟─d485a985-39ec-422b-9476-d55b98786093
 # ╟─aa64496d-a65c-4b38-88b6-b5f9f14c447d
