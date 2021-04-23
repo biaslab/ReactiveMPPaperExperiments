@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.14.3
 
 using Markdown
 using InteractiveUtils
@@ -40,9 +40,11 @@ end
 md"""
 ### Hidden Markov Model
 
-In this demo the goal is to perform approximate variational Bayesian Inference for Hidden Markov Model (HMM).
+In this demo the goal is to perform approximate variational Bayesian Inference for Hidden Markov Model (HMM). Hidden Markov Model can be viewed as a specific instance of the state space mode in which latent variables are discrete.
 
-We will use the following model:
+The HMM is widely used in speech recognition (Jelinek, 1997; Rabiner and Juang, 1993), natural language modelling (Mannina and Schütze, 1999) and in may other related fields.
+
+We consider a first-order HMM with latent states $s_k$ and observations $x_k$ governed by a state transition probability matrix $\mathbf{A}$ and an observation matrix $\mathbf{B}$:
 
 ```math
 \begin{equation}
@@ -53,7 +55,15 @@ We will use the following model:
 \end{equation}
 ```
 
-where $\text{Cat}$ denotes Categorical distribution. Also, we denote by $\mathbf{s}_k$ the current state of the system (at time step $k$), by $\mathbf{s}_{k - 1}$ the previous state at time $k-1$, $\mathbf{A}$ and $\mathbf{B}$ are a constant system inputs and $\mathbf{x}_k$ are noise-free observations.
+where $\text{Cat}$ denotes Categorical distribution. It is convenient to use one-hot encoding scheme for latent variables $s_k$ and model it with a categorical distribution $\text{Cat}(s|p)$ where p is a vector of probabilities of each possible state. Because the latent variables are $K$-dimensional binary variables, this conditional distribution corresponds to a table of numbers that we denote by $\bf{A}$, the elements of which are known as *transition probabilities*. They are given by 
+
+```math
+A_{jk} \equiv p(z_{nk} = 1|z_{n - 1, j} = 1),\: 0 \leq A_{jk} \leq 1,\:\sum_kA_{jk}=1
+```
+
+Also, we denote by $\mathbf{s}_k$ the current state of the system (at time step $k$), by $\mathbf{s}_{k - 1}$ the previous state at time $k-1$. For simplicity we assume $\mathbf{A}$ and $\mathbf{B}$ are a constant system inputs and $\mathbf{x}_k$ are noise-free observations.
+
+To have a full Bayesian treatmeant of the problem, both $\mathbf{A}$ and $\mathbf{B}$ are endowed with `MatrixDirichlet` priors. `MatrixDirichlet` is a matrix-variate generalisation of `Dirichlet` distribution and consists of `Dirichlet` distributions on the columns.
 
 We will build a full graph for this model and perform VMP iterations during an inference procedure.
 """
@@ -65,7 +75,9 @@ md"""
 
 # ╔═╡ 927a5ad7-7ac0-4e8a-a755-d1223093b992
 md"""
-GraphPPL.jl offers a model specification syntax that resembles closely to the mathematical equations defined above. We use `Transition` node for `Cat(Ax)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `x`.
+GraphPPL.jl offers a model specification syntax that resembles closely to the mathematical equations defined above. We use `Transition(s|x, A)` distribution as an alias for `Cat(s|A*x)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `x`.
+
+In our model specification we assume a relatively strong prior on the observarion probability matrix, expressing the prior knowledge that we are most likely to observer the true state. On the other hand, we assumme an unifnromative prior on the state transition matrix, expressing no prior knowledge about transition probabilities and structure.
 """
 
 # ╔═╡ c01151b2-5476-4170-971c-518019e891f8
@@ -209,7 +221,7 @@ function inference(observations, n_its)
 
 	# To make many vmp iterations we simply pass our observations
 	# in our model multiple time. It forces an inference engine to react on them 
-	# multiple times and leads to a better approximations 
+	# multiple times and update posterior marginals several times
     for i in 1:n_its
         update!(x, observations)
     end
@@ -247,7 +259,7 @@ md"""
 """
 
 # ╔═╡ 9697161a-ebfd-4071-8424-a0c5c83c9ce8
-x, s = generate_data(n, A, B, seed = seed)
+x, s = generate_data(n, A, B, seed = seed);
 
 # ╔═╡ c9dd7f62-e02b-4b50-ae47-151b8772a899
 s_est, A_est, B_est, fe = inference(x, n_itr);

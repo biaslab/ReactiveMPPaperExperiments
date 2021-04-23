@@ -133,9 +133,9 @@ version = "0.2.2"
 
 [[ChainRules]]
 deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Random", "Reexport", "Requires", "Statistics"]
-git-tree-sha1 = "a426b3526dffff05ef3eaab35d6dc2869ec5846a"
+git-tree-sha1 = "1f410fba5c04d03ab712f348f1542e6059376547"
 uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
-version = "0.7.60"
+version = "0.7.61"
 
 [[ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -148,6 +148,12 @@ deps = ["ArrayInterface", "IfElse", "Requires", "Static", "StrideArraysCore", "T
 git-tree-sha1 = "6596dbdb8fadd45ef9dff0087ef3a6ec9c5473bc"
 uuid = "b630d9fa-e28e-4980-896d-83ce5e2106b2"
 version = "0.2.3"
+
+[[CodecZlib]]
+deps = ["TranscodingStreams", "Zlib_jll"]
+git-tree-sha1 = "ded953804d019afa9a3f98981d99b33e3db7b6da"
+uuid = "944b1d66-785c-5afd-91f1-9de20f533193"
+version = "0.7.0"
 
 [[ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random", "StaticArrays"]
@@ -214,6 +220,12 @@ deps = ["JSON", "VersionParsing"]
 git-tree-sha1 = "299304989a5e6473d985212c28928899c74e9421"
 uuid = "8f4d0f93-b110-5947-807f-2305c1781a2d"
 version = "1.5.2"
+
+[[Configurations]]
+deps = ["Crayons", "ExproniconLite", "OrderedCollections", "TOML"]
+git-tree-sha1 = "fecec31dbbe3d545d9036b07aa8d012dfa1ca487"
+uuid = "5218b696-f38b-4ac9-8b61-a12ec717816d"
+version = "0.15.2"
 
 [[ConsoleProgressMonitor]]
 deps = ["Logging", "ProgressMeter"]
@@ -347,10 +359,10 @@ deps = ["ArgTools", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 
 [[DrWatson]]
-deps = ["Dates", "FileIO", "LibGit2", "Pkg", "Random", "Requires", "UnPack"]
-git-tree-sha1 = "8a25e4984c3895ecc33891646362e4ff6baa4619"
+deps = ["Dates", "FileIO", "LibGit2", "MacroTools", "Pkg", "Random", "Requires", "UnPack"]
+git-tree-sha1 = "12bb19e5e6671a0940f2c97c9b01ffeda596ea49"
 uuid = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
-version = "2.0.1"
+version = "2.0.2"
 
 [[DynamicPPL]]
 deps = ["AbstractMCMC", "AbstractPPL", "Bijectors", "ChainRulesCore", "Distributions", "MacroTools", "NaturalSort", "Random"]
@@ -381,6 +393,11 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "1402e52fcda25064f51c77a9655ce8680b76acf0"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.2.7+6"
+
+[[ExproniconLite]]
+git-tree-sha1 = "7bdcbbc3797874c4f93a8c6a1a8f5f6887888889"
+uuid = "55351af7-c7e9-48d6-89ff-24e801d99491"
+version = "0.6.7"
 
 [[FFMPEG]]
 deps = ["FFMPEG_jll", "x264_jll"]
@@ -740,6 +757,12 @@ git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
 uuid = "82899510-4779-5014-852e-03e436cf321d"
 version = "1.0.0"
 
+[[JLD2]]
+deps = ["CodecZlib", "DataStructures", "MacroTools", "Mmap", "Pkg", "Printf", "Requires", "UUIDs"]
+git-tree-sha1 = "9f2f2f24e60305feb6ae293a617ddf06f429efc3"
+uuid = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
+version = "0.4.3"
+
 [[JLLWrappers]]
 deps = ["Preferences"]
 git-tree-sha1 = "642a199af8b68253517b80bd3bfd17eb4e84df6e"
@@ -777,9 +800,9 @@ version = "1.2.1"
 
 [[Latexify]]
 deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "Printf", "Requires"]
-git-tree-sha1 = "1925f6838df247e7853f3f9727dd8a52a78f60f4"
+git-tree-sha1 = "f77a16cb3804f4a74f57e5272a6a4a9a628577cb"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.15.2"
+version = "0.15.5"
 
 [[LazyArtifacts]]
 deps = ["Artifacts", "Pkg"]
@@ -909,9 +932,9 @@ version = "0.12.12"
 
 [[MCMCChains]]
 deps = ["AbstractFFTs", "AbstractMCMC", "AxisArrays", "Compat", "Distributions", "Formatting", "IteratorInterfaceExtensions", "LinearAlgebra", "MLJModelInterface", "NaturalSort", "PrettyTables", "Random", "RecipesBase", "Serialization", "SpecialFunctions", "Statistics", "StatsBase", "TableTraits", "Tables"]
-git-tree-sha1 = "6d6fafb0a77eafe545c9425db26346cf16262bc1"
+git-tree-sha1 = "3d81ba599603d871f32e1bce717174e6b8cae7b7"
 uuid = "c7f686f2-ff18-58e9-bc7b-31028e88f75d"
-version = "4.8.0"
+version = "4.9.0"
 
 [[MKL_jll]]
 deps = ["Artifacts", "IntelOpenMP_jll", "JLLWrappers", "LazyArtifacts", "Libdl", "Pkg"]
@@ -1152,10 +1175,10 @@ uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 version = "1.12.0"
 
 [[Pluto]]
-deps = ["Base64", "Dates", "Distributed", "FuzzyCompletions", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "TableIOInterface", "Tables", "UUIDs"]
-git-tree-sha1 = "7764c0ad79718a5e5f684b68db7cb069fb60b909"
+deps = ["Base64", "Configurations", "Dates", "Distributed", "FuzzyCompletions", "HTTP", "InteractiveUtils", "Logging", "Markdown", "MsgPack", "Pkg", "REPL", "Sockets", "TableIOInterface", "Tables", "UUIDs"]
+git-tree-sha1 = "39c1766f7f418c0263447d4c23566407515d02dd"
 uuid = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-version = "0.14.2"
+version = "0.14.3"
 
 [[PlutoUI]]
 deps = ["Base64", "Dates", "InteractiveUtils", "JSON", "Logging", "Markdown", "Random", "Reexport", "Suppressor"]
@@ -1177,9 +1200,9 @@ version = "1.2.1"
 
 [[PrettyTables]]
 deps = ["Crayons", "Formatting", "Markdown", "Reexport", "Tables"]
-git-tree-sha1 = "574a6b3ea95f04e8757c0280bb9c29f1a5e35138"
+git-tree-sha1 = "a7162ad93a899333717481f448a235ffafeb5eba"
 uuid = "08abe8d2-0d0c-5749-adfa-8a2ac140af0d"
-version = "0.11.1"
+version = "1.0.0"
 
 [[Printf]]
 deps = ["Unicode"]
@@ -1530,6 +1553,12 @@ deps = ["Adapt", "DiffRules", "ForwardDiff", "LinearAlgebra", "MacroTools", "NNl
 git-tree-sha1 = "bf4adf36062afc921f251af4db58f06235504eff"
 uuid = "9f7883ad-71c0-57eb-9f7f-b5c9e6d3789c"
 version = "0.2.16"
+
+[[TranscodingStreams]]
+deps = ["Random", "Test"]
+git-tree-sha1 = "7c53c35547de1c5b9d46a4797cf6d8253807108c"
+uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
+version = "0.9.5"
 
 [[Transducers]]
 deps = ["Adapt", "ArgCheck", "BangBang", "Baselet", "CompositionsBase", "DefineSingletons", "Distributed", "InitialValues", "Logging", "Markdown", "MicroCollections", "Requires", "Setfield", "SplittablesBase", "Tables"]
