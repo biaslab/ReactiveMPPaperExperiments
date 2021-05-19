@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.3
+# v0.14.5
 
 using Markdown
 using InteractiveUtils
@@ -40,7 +40,7 @@ end
 md"""
 #### Linear Multivariate Gaussian State-space Model
 
-In this demo, the goal is to perform both Kalman filtering and smoothing inference algorithms with a state-space model (SSM).
+In this demo, the goal is to perform both Kalman filtering and smoothing algorithms for a Linear Multivariate Gaussian state-space model (LGSSM).
 
 We wil use the following model:
 
@@ -128,7 +128,7 @@ end
 
 # ╔═╡ 65e339e3-a90d-47b6-b5f2-b60addc93791
 md"""
-GraphPPL.jl offers a model specification syntax that resembles closely to the mathematical equations defined above. We use `MvGaussianMeanCovariance` node for `N(mean, covariance)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `y`.
+GraphPPL.jl offers a model specification syntax that resembles closely to the mathematical equations defined above. In this particular implementation we use `MvGaussianMeanCovariance` node for $\mathcal{N}(\mu, \Sigma)$ distribution. ReactiveMP.jl inference backend also supports `MvGaussianMeanPrecision` and `MvGaussianWeightedMeanPrecision` parametrisations for factor nodes. `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `y`.
 """
 
 # ╔═╡ 210d41a9-a8ff-4c24-9b88-524bed03cd7f
@@ -226,7 +226,9 @@ end
 md"""
 ### Inference
 
-Next we need to define our inference procedure. Our model has no loops in it so we can easily perform sum-product. To do that we simply subscribe on posterior marginal updates in our model with `subscribe!` function and pass our observations with `update!` function. Here is a general template for inference function:
+Next we need to define our inference procedure. FFG that represents our model has no loops hence we may perform exact Bayesian inference with sum-product algorithm. 
+
+To obtain posterior marginal distributions of our latent state variables we simply use  `subscribe!` function together with `getmarginal` observable. To start inference we pass our observations with `update!` function. Here is a general template for inference function:
 """
 
 # ╔═╡ fb94e6e9-10e4-4f9f-95e6-43cdd9184c09
@@ -321,7 +323,7 @@ From inference results we can see that our model predicted latent states correct
 md"""
 ### Kalman filter
 
-We may perform forward-only inference task which resembles Kalman filter for the same model. To do that it is enough to build a single time step of the model and to redirect posterior marginal updates from the next step to the priors of the previous time step. First, lets define a single time step of the model.
+We may perform forward-only message-passing scheme which resembles Kalman filter for the same model. To do that it is enough to build a single time step of the model and to redirect posterior marginal updates from the next step to the priors of the previous time step. First, lets define a single time step of the model.
 """
 
 # ╔═╡ 7671e1cc-4ff6-4c2b-b811-aa389a82c6b2
@@ -375,7 +377,7 @@ function inference_single_time_segment(observations, A, B, P, Q)
     xsubscription = subscribe!(getmarginal(x_t), xbuffer)
 	fsubscription = subscribe!(score(Float64, BetheFreeEnergy(), model), bfe)
     
-	# Priors for very first observation
+	# Priors for the very first observation
     update!(x_min_t_mean, [ 0.0, 0.0 ])
     update!(x_min_t_cov, [ 100.0 0.0; 0.0 100.0 ])
     
@@ -576,7 +578,7 @@ We want to perform benchmarking for different sets of parameters. In principal, 
 # but will reload it from data folder
 smoothing_benchmarks = map(benchmark_allparams) do params
 	path = datadir("benchmark", "lgssm", "smoothing")
-	result, _ = produce_or_load(path, params) do p
+	result, _ = produce_or_load(path, params; tag = false) do p
 		run_benchmark(inference_full_graph, p)
 	end
 	return result
@@ -588,7 +590,7 @@ end;
 # but will reload it from data folder
 filtering_benchmarks = map(benchmark_allparams) do params
 	path = datadir("benchmark", "lgssm", "filtering")
-	result, _ = produce_or_load(path, params) do p
+	result, _ = produce_or_load(path, params; tag = false) do p
 		run_benchmark(inference_single_time_segment, p)
 	end
 	return result
@@ -656,7 +658,7 @@ end
 
 # ╔═╡ 4871b82d-15db-4c80-9b95-7f2c8086b864
 md"""
-We can see from benchmark results execution time scales linearly with the number of observations. Moreover we see that filtering as roughly twice faster as smoothing. This is in line with expectations because smoothing does both forward and backward passes, while filtering does only forward and hence should be 2x times faster.
+We can see from benchmark results execution time scales linearly with the number of observations. This is in line with our expectations because the complexity of both filtering and smoothing algorithms are linear on number of observations.
 """
 
 # ╔═╡ 653dafb5-173d-40f7-93b3-ae4fbfb5d0d6
