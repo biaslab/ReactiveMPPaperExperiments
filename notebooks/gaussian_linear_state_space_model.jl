@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.5
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -856,7 +856,7 @@ end
 # ╔═╡ c41e8630-767a-4072-80a7-5ef8c5ecc4e0
 # Here we create a list of parameters we want to run our benchmarks with
 benchmark_allparams_turing = dict_list(Dict(
-	"n"        => [ 50, 100, 500, 1000 ],
+	"n"        => [ 50, 100, 250, 500, 1000 ],
 	"seed"     => 42,
 	"θ"        => π / 12,
 	"nsamples" => [ 250, 500 ]
@@ -876,7 +876,7 @@ end;
 
 # ╔═╡ d6253937-b32e-4c6d-a0a1-8eb35afe92c5
 md"""
-Here we compare `Turing.jl` performance results agains smoothing algorithm in `ReactiveMP.jl`. We can see that `ReactiveMP.jl` outperforms `Turing.jl` significantly. It is worth noting that this model contains many conjugate prior and likelihood pairings that lead to analytically computable Bayesian posteriors. For these types of models, ReactiveMP.jl takes advantage of the conjugate pairings and beats general-purpose probabilistic programming packages like Turing.jl easily in terms of computational load, speed, memory and accuracy. On the other hand, Turing.jl is currently still capable of running inference for a broader set of models.
+Here we compare `Turing.jl` performance results against smoothing algorithm performed in `ReactiveMP.jl`. We can see that `ReactiveMP.jl` outperforms `Turing.jl` significantly. It is worth noting that this model contains many conjugate prior and likelihood pairings that lead to analytically computable Bayesian posteriors. For these types of models, ReactiveMP.jl takes advantage of the conjugate pairings and beats general-purpose probabilistic programming packages like Turing.jl easily in terms of computational load, speed, memory and accuracy. On the other hand, Turing.jl is currently still capable of running inference for a broader set of models.
 """
 
 # ╔═╡ 97855300-b472-404c-b5f7-daa5f908e34b
@@ -905,7 +905,7 @@ begin
 	)
 	
 	local query_turing = @from row in df_turing begin
-		@where row.seed == target_seed && row.θ == target_θ && row.nsamples == 500
+		@where row.seed == target_seed && row.θ == target_θ && row.nsamples == 250
 		@orderby ascending(row.n)
 		@select { row.n, row.min, row.mean }
 	end
