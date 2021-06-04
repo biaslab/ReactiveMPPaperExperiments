@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -29,6 +29,7 @@ end
 begin
 	using PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	using BenchmarkTools
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
@@ -132,11 +133,11 @@ end
 begin
 	
 	seed_slider = @bind(
-		seed, ThrottledSlider(1:100, default = 42, show_value = true)
+		seed, ThrottledSlider(1:100, default = 34, show_value = true)
 	)
 	
 	n_slider = @bind(
-		n, ThrottledSlider(1:1000, default = 100, show_value = true)
+		n, ThrottledSlider(1:1000, default = 150, show_value = true)
 	)
 	
 	τ_z_slider = @bind(
@@ -249,6 +250,124 @@ begin
 	plot(p1, p2, p3, layout = @layout([ a b; c ]))
 end
 
+# ╔═╡ b9bd5a69-16fb-4b6b-84c7-80a514c91ccf
+md"""
+### Benchmark 
+"""
+
+# ╔═╡ cb60be26-87f5-4cf7-b3b4-d16197a7a065
+function run_benchmark(params)
+	@unpack n, iters, seed, τ_z, τ_y, κ, ω = params
+	
+	z_data, s_data, y_data = generate_test_data(n, τ_z, τ_y, κ, ω, seed = seed);
+	
+	fe, zm, sm = inference(y_data, iters, 12, τ_z, τ_y, κ, ω);
+	benchmark  = @benchmark inference($y_data, $iters, 12, $τ_z, $τ_y, $κ, $ω);
+	
+	output = @strdict n iters seed τ_z τ_y κ ω fe zm sm benchmark
+	
+	return output
+end
+
+# ╔═╡ 597b54c3-d8ce-4aed-a961-9a0fc9640a22
+# Here we create a list of parameters we want to run our benchmarks with
+benchmark_params = dict_list(Dict(
+	"n"     => [ 50, 100, 250, 500, 750, 1000, 1500, 2000, 2500, 5000, 10000 ],
+	"iters" => [ 5, 10, 15, 20 ],
+	"seed"  => [ 42, 123 ],
+	"τ_z"   => 1.0,
+	"τ_y"   => 1.0,
+	"κ"     => 1.0,
+	"ω"     => 0.0,	
+));
+
+# ╔═╡ 3f045ae5-e696-4113-99f7-b8d1704b1bb3
+# First run maybe slow, you may track the progress in the terminal
+# Subsequent runs will not create new benchmarks 
+# but will reload it from data folder
+hgf_benchmarks = map(benchmark_params) do params
+	path = datadir("benchmark", "hgf", "filtering")
+	result, _ = produce_or_load(path, params; tag = false) do p
+		run_benchmark(p)
+	end
+	return result
+end;
+
+# ╔═╡ 39fa40f2-4077-495b-b4e8-61d908ad4c83
+target_n_itrs = [ 5, 10, 20 ]
+
+# ╔═╡ bb85ebc5-5f25-4a9d-8f09-bd41061ccc70
+begin
+	
+	local p = plot(
+		title = "Hierarchical Gaussian Filter Benchmark (number of observations)",
+		titlefontsize = 10, legend = :bottomright,
+		xlabel = "Number of observations in dataset (log-scale)", 
+		xguidefontsize = 9,
+		ylabel = "Time (in ms, log-scale)", 
+		yguidefontsize = 9
+	)
+	
+	local mshapes = [ :utriangle, :diamond, :pentagon ]
+	
+	for (mshape, target_n_itr) in zip(mshapes, target_n_itrs)
+		local filtered = filter(hgf_benchmarks) do b
+			return b["iters"] === target_n_itr
+		end
+
+		local range      = map(f -> f["n"], filtered)
+		local benchmarks = map(f -> f["benchmark"], filtered)
+		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
+
+
+
+		p = plot!(
+			p, range, timings,
+			yscale = :log10, xscale = :log10,
+			markershape = mshape, label = "VMP n_itr = $(target_n_itr)"
+		)
+	end
+	
+	@saveplot p "hgf_benchmark_observations"
+end
+
+# ╔═╡ 1cc14e44-8744-41b0-860c-770ae3b3e07c
+target_ns = [ 50, 500, 2500, 10000 ]
+
+# ╔═╡ 16e975fc-2692-4625-bb4a-f6693205df3a
+begin
+	local p = plot(
+		title = "Hierarchical Gaussian Filter Benchmark (iterations)",
+		titlefontsize = 10, legend = :bottomright,
+		xlabel = "Number of performed VMP iterations (log-scale)", 
+		xguidefontsize = 9,
+		ylabel = "Time (in ms, log-scale)", 
+		yguidefontsize = 9
+	)
+	
+	local mshapes = [ :utriangle, :diamond, :pentagon, :dtriangle ]
+	
+	for (mshape, target_n) in zip(mshapes, target_ns)
+		local filtered = filter(hgf_benchmarks) do b
+			return b["n"] === target_n
+		end
+
+		local range      = map(f -> f["iters"], filtered)
+		local benchmarks = map(f -> f["benchmark"], filtered)
+		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
+		local ylim       = (1e0, 10maximum(timings))
+
+
+		p = plot!(
+			p, string.(range), timings,
+			yscale = :log10, xscale = :log10,
+			markershape = mshape, label = "n_observations = $(target_n)", ylim = ylim
+		)
+	end
+	
+	@saveplot p "hgf_benchmark_iterations"
+end
+
 # ╔═╡ Cell order:
 # ╠═5f80d3bc-9de9-11eb-1f38-af8cac91b6c0
 # ╠═9e746f15-2336-4503-a480-a788f62e37f6
@@ -265,3 +384,11 @@ end
 # ╠═0b0f6b07-7a88-413b-b3ad-a3de3ddc2e7e
 # ╟─1594d934-9c3c-477b-9931-bc265af18046
 # ╟─7b68e3c5-2dc6-4310-b437-8ab12f924dd6
+# ╟─b9bd5a69-16fb-4b6b-84c7-80a514c91ccf
+# ╠═cb60be26-87f5-4cf7-b3b4-d16197a7a065
+# ╠═597b54c3-d8ce-4aed-a961-9a0fc9640a22
+# ╠═3f045ae5-e696-4113-99f7-b8d1704b1bb3
+# ╟─39fa40f2-4077-495b-b4e8-61d908ad4c83
+# ╟─bb85ebc5-5f25-4a9d-8f09-bd41061ccc70
+# ╠═1cc14e44-8744-41b0-860c-770ae3b3e07c
+# ╟─16e975fc-2692-4625-bb4a-f6693205df3a

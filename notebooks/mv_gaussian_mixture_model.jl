@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -30,6 +30,7 @@ begin
 	using PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
 	using LinearAlgebra
+	using BenchmarkTools
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
@@ -323,6 +324,51 @@ begin
 	@saveplot p "gmm_fe"
 end
 
+# ╔═╡ fd5b774a-6475-4346-9fdc-e71f89b4be56
+md"""
+### Benchmark
+"""
+
+# ╔═╡ 924d5804-b3e0-4d25-b2ce-5ba8a5b56f75
+function run_benchmark(params)
+	@unpack n, iters, seed, nmixtures, cdistance, angle = params
+	
+	y = generate_data(n, nmixtures, cdistance, angle, seed);
+	
+	ms, ps, mixing, fe = inference(
+		y, iters, nmixtures, cdistance, angle
+	);
+	
+	benchmark = @benchmark inference($y, $iters, $nmixtures, $cdistance, $angle);
+	
+	output = @strdict n iters seed nmixtures cdistance angle ms ps mixing fe benchmark
+	
+	return output
+end
+
+# ╔═╡ 6ec68085-2b43-4eed-95d8-30a2a8b24d48
+# Here we create a list of parameters we want to run our benchmarks with
+benchmark_params = dict_list(Dict(
+	"n"     => [ 50, 100, 250, 500, 750, 1000, 1500, 2000 ],
+	"iters" => [ 5, 10, 15 ],
+	"seed"  => 42,
+	"nmixtures" => [ 4, 5, 6 ],
+	"cdistance" => 10,
+	"angle"     => 1.5π / 6
+));
+
+# ╔═╡ a639c21c-5f97-4fc8-9fc8-795037079480
+# First run maybe slow, you may track the progress in the terminal
+# Subsequent runs will not create new benchmarks 
+# but will reload it from data folder
+gmm_benchmarks = map(benchmark_params) do params
+	path = datadir("benchmark", "gmm")
+	result, _ = produce_or_load(path, params; tag = false) do p
+		run_benchmark(p)
+	end
+	return result
+end;
+
 # ╔═╡ Cell order:
 # ╠═b7ab78ee-a296-11eb-3f8b-07d7bda0c5be
 # ╠═b3858be8-bf87-470d-bc27-a441f3854600
@@ -345,3 +391,7 @@ end
 # ╟─8182deab-8b09-491c-a802-877d2af25afc
 # ╟─b7d3507c-d244-4118-b20e-ddf662ee5df8
 # ╟─3362a9ce-15e3-403d-8747-3e685150f8e2
+# ╟─fd5b774a-6475-4346-9fdc-e71f89b4be56
+# ╠═924d5804-b3e0-4d25-b2ce-5ba8a5b56f75
+# ╠═6ec68085-2b43-4eed-95d8-30a2a8b24d48
+# ╠═a639c21c-5f97-4fc8-9fc8-795037079480

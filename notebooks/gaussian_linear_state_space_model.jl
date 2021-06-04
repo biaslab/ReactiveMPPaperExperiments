@@ -859,7 +859,9 @@ benchmark_allparams_turing = dict_list(Dict(
 	"n"        => [ 50, 100, 250, 500, 1000 ],
 	"seed"     => 42,
 	"θ"        => π / 12,
-	"nsamples" => [ 250, 500 ]
+	"nsamples" => [ 
+		250, 500, @onlyif("n" <= 250, 1000) 
+	]
 ));
 
 # ╔═╡ f9436160-034a-455d-8489-ba80107932f7
@@ -905,7 +907,7 @@ begin
 	)
 	
 	local query_turing = @from row in df_turing begin
-		@where row.seed == target_seed && row.θ == target_θ && row.nsamples == 250
+		@where row.seed == target_seed && row.θ == target_θ && row.nsamples == 1000
 		@orderby ascending(row.n)
 		@select { row.n, row.min, row.mean }
 	end
@@ -1040,5 +1042,5 @@ end
 # ╠═c41e8630-767a-4072-80a7-5ef8c5ecc4e0
 # ╠═f9436160-034a-455d-8489-ba80107932f7
 # ╟─d6253937-b32e-4c6d-a0a1-8eb35afe92c5
-# ╟─97855300-b472-404c-b5f7-daa5f908e34b
+# ╠═97855300-b472-404c-b5f7-daa5f908e34b
 # ╟─6b572117-9b58-41c5-a507-4f9e38de9db9
