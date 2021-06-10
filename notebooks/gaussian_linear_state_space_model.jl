@@ -29,7 +29,7 @@ end
 begin
 	using PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
-	using BenchmarkTools, DataFrames, Query
+	using BenchmarkTools, DataFrames, Query, LinearAlgebra
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
@@ -147,7 +147,7 @@ begin
 	
 	# Number of observations on our model for full graph
 	n_smoothing_slider = @bind(
-		n_smoothing, ThrottledSlider(1:200, default = 100)
+		n_smoothing, ThrottledSlider(1:200, default = 50)
 	)
 	
 	# θ parameter is a rotation angle for transition matrix
@@ -215,7 +215,7 @@ begin
 	)
 	local range = 1:n_smoothing
 	
-	p = plot!(p, range, x_reshaped, label = x_label)
+	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
@@ -287,7 +287,7 @@ x_smoothing_estimated, bfe_smoothing = inference_full_graph(
 begin
 	local reshape_data = (data) -> transpose(reduce(hcat, data))
 	
-	local ylimit = (-20, 20)
+	local ylimit = (-18, 18)
 	
 	local x_label = [ "x[:, 1]" "x[:, 2]" ]
 	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
@@ -297,18 +297,22 @@ begin
 	local y_reshaped = y_smoothing |> reshape_data
 	
 	local x_inferred_means = mean.(x_smoothing_estimated) |> reshape_data
-	local x_inferred_stds  = var.(x_smoothing_estimated) |> reshape_data
+	local x_inferred_stds  = diag.(std.(x_smoothing_estimated)) |> reshape_data
 	
 	local p = plot(
-		title = "Smoothing inference results", titlefontsize = 10,
-		xlabel = "Time step k", xguidefontsize = 8,
-		ylabel = "Latent states values", yguidefonrsize = 8
+		# title = "Smoothing inference results", titlefontsize = 10,
+		# xlabel = "Time step k", xguidefontsize = 8,
+		# ylabel = "Latent states values", yguidefonrsize = 8
 	)
 	local range = 1:n_smoothing
 	
-	p = plot!(p, range, x_reshaped, label = x_label)
-	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
+	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
+	p = plot!(
+		p, range, x_inferred_means, ribbon = x_inferred_stds, 
+		label = i_label, fillalpha = 0.3, palette = [ :orange, :green ]
+	)
+
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
 	@saveplot p "lgssm_smoothing_inference"
@@ -402,7 +406,7 @@ begin
 	
 	# Number of observations on our model for filtering case
 	n_filtering_slider = @bind(
-		n_filtering, ThrottledSlider(1:200, default = 100)
+		n_filtering, ThrottledSlider(1:200, default = 50)
 	)
 	
 	# θ parameter is a rotation angle for transition matrix
@@ -460,7 +464,7 @@ begin
 	)
 	local range = 1:n_filtering
 	
-	p = plot!(p, range, x_reshaped, label = x_label)
+	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
@@ -491,7 +495,7 @@ x_filtering_estimated, bfe_filtering = inference_single_time_segment(
 begin
 	local reshape_data = (data) -> transpose(reduce(hcat, data))
 	
-	local ylimit = (-20, 20)
+	local ylimit = (-18, 18)
 	
 	local x_label = [ "x[:, 1]" "x[:, 2]" ]
 	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
@@ -501,18 +505,22 @@ begin
 	local y_reshaped = y_filtering |> reshape_data
 	
 	local x_inferred_means = mean.(x_filtering_estimated) |> reshape_data
-	local x_inferred_stds  = var.(x_filtering_estimated) |> reshape_data
+	local x_inferred_stds  = diag.(std.(x_filtering_estimated)) |> reshape_data
 	
 	local p = plot(
-		title = "Filtering inference results", titlefontsize = 10,
-		xlabel = "Time step k", xguidefontsize = 8,
-		ylabel = "Latent states values", yguidefonrsize = 8
+		# title = "Fileting inference results", titlefontsize = 10,
+		# xlabel = "Time step k", xguidefontsize = 8,
+		# ylabel = "Latent states values", yguidefonrsize = 8
 	)
-	local range = 1:n_filtering
+	local range = 1:n_smoothing
 	
-	p = plot!(p, range, x_reshaped, label = x_label)
-	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
+	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
+	p = plot!(
+		p, range, x_inferred_means, ribbon = x_inferred_stds, 
+		label = i_label, fillalpha = 0.3, palette = [ :orange, :green ]
+	)
+
 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
 	@saveplot p "lgssm_filtering_inference"
@@ -744,7 +752,7 @@ end;
 begin
 	seed_turing = 42
 	n_turing    = 50
-	θ_turing    = π / 12
+	θ_turing    = π / 20
 	
 	A_turing = [ 
 		cos(θ_turing) -sin(θ_turing); 
@@ -1042,5 +1050,5 @@ end
 # ╠═c41e8630-767a-4072-80a7-5ef8c5ecc4e0
 # ╠═f9436160-034a-455d-8489-ba80107932f7
 # ╟─d6253937-b32e-4c6d-a0a1-8eb35afe92c5
-# ╠═97855300-b472-404c-b5f7-daa5f908e34b
+# ╟─97855300-b472-404c-b5f7-daa5f908e34b
 # ╟─6b572117-9b58-41c5-a507-4f9e38de9db9

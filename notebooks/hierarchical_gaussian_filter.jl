@@ -238,14 +238,20 @@ md"""
 begin 
 	local p1 = plot()
 	local p2 = plot()
-	
-	p1 = plot!(p1, mean.(zm), ribbon = std.(zm), legend = false)
+
 	p1 = plot!(p1, z_data)
-	
-	p2 = plot!(p2, mean.(sm), ribbon = std.(sm), legend = false)
+	p1 = plot!(p1, mean.(zm), ribbon = std.(zm), legend = false)
+
+
 	p2 = plot!(p2, s_data)
+	p2 = plot!(p2, mean.(sm), ribbon = std.(sm), legend = false)
+
 	
-	p3 = plot(fe)
+	p3 = plot(fe, legend = false)
+	
+	@saveplot p1 "hgf_inference_1"
+	@saveplot p1 "hgf_inference_2"
+	@saveplot p1 "hgf_inference_"
 	
 	plot(p1, p2, p3, layout = @layout([ a b; c ]))
 end
@@ -332,7 +338,7 @@ begin
 end
 
 # ╔═╡ 1cc14e44-8744-41b0-860c-770ae3b3e07c
-target_ns = [ 50, 500, 2500, 10000 ]
+target_ns = [ 500, 2500, 10000 ]
 
 # ╔═╡ 16e975fc-2692-4625-bb4a-f6693205df3a
 begin

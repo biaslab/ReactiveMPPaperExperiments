@@ -167,8 +167,8 @@ Pluto notebooks allow us to dynamically change some parameters and arguments for
 
 # ╔═╡ 1d23082e-ab18-4ca6-9383-aaebddb29f00
 begin
-	seed_slider = @bind(seed, ThrottledSlider(1:100, default = 41))
-	n_slider    = @bind(n, ThrottledSlider(2:100, default = 75))
+	seed_slider = @bind(seed, ThrottledSlider(1:100, default = 54))
+	n_slider    = @bind(n, ThrottledSlider(2:100, default = 50))
 end;
 
 # ╔═╡ f28c42fc-1e8a-4e3b-a0cf-73da0c7875cd
@@ -273,7 +273,7 @@ begin
 	p = plot!(p, ylabel = "Free energy", yguidefontsize = 8)
 	p = plot!(p, xlabel = "Iteration index", xguidefontsize = 8)
 	
-	if n_itr > 10
+	if n_itr > 30
 		local range        = 1:n_itr
 		local lens_x_range = [ Int(round(0.75 * n_itr)), n_itr ]
 
@@ -322,9 +322,10 @@ begin
 	local s_estimated = mean.(last(s_est))
 	local s_err       = std.(last(s_est))
 	
-	p = scatter!(p, range, s_states, ms = 3, label = "Real states")
-	p = plot!(p, range, s_estimated, ribbon = s_err, fillalpha = 0.2, label = "Estimated")
-	p = plot!(xlabel = "Iteration index", xguidefontsize = 8)
+	p = scatter!(p, range, s_states, ms = 3, label = "Real states", color = :red3, alpha = 0.75)
+	p = plot!(p, range, s_estimated, ribbon = s_err, fillalpha = 0.2, label = "Estimated", color = :orange)
+	p = plot!(p, legend = :bottomright)
+	# p = plot!(xlabel = "Time-step index", xguidefontsize = 8)
 	
 	@saveplot p "hmm_inference"
 end

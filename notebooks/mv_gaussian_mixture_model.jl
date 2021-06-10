@@ -197,7 +197,7 @@ md"""
 
 Next we need to define our inference procedure. Since we used mean field factorisation we need to perform some VMP iterations. To do so we pass same data to `update!` function multiple times forcing inference backend to react multiple times and hence update posterior marginals of the model parameters.
 
-To actually strat VMP procedure we need initial marginals. We use `setmarginal!` function to define an initial marginal for the model parameters. We decouple initial marginals to avoid collapsing of clusters and to improve procedure convergence rate.
+To actually start VMP procedure we need initial marginals. We use `setmarginal!` function to define an initial marginal for the model parameters. We decouple initial marginals to avoid collapsing of clusters and to improve procedure convergence rate.
 """
 
 # ╔═╡ d033184a-db65-47e7-8596-de3620d8b5bd
@@ -283,8 +283,7 @@ begin
 	local limits  = (-1.5cdistance, 1.5cdistance)
 	
 	local p = plot(
-		title = "Inference results for Gaussian Mixture",
-		titlefontsize = 9,
+		# title = "Inference results for Gaussian Mixture", titlefontsize = 9,
 		xlim = limits, ylim = limits,
 	)
 	
@@ -315,11 +314,11 @@ As we can see our model correctly predicted the underlying means and precisions 
 # ╔═╡ 3362a9ce-15e3-403d-8747-3e685150f8e2
 begin
 	local p = plot(
-		title = "Free energy for Gaussian Mixture Model Bayesian Inference",
+		# title = "Free energy for Gaussian Mixture Model Bayesian Inference",
 		titlefontsize = 9
 	)
 	
-	p = plot!(p, 1:length(fe), fe, label = "Bethe Free Energy")
+	p = plot!(p, 1:length(fe), fe, legend = false)
 	
 	@saveplot p "gmm_fe"
 end
@@ -388,7 +387,7 @@ end;
 # ╠═d033184a-db65-47e7-8596-de3620d8b5bd
 # ╠═33a45c18-7755-42d9-89cc-41964e76531b
 # ╟─ea21fb47-d599-449e-a785-e655cb330836
-# ╟─8182deab-8b09-491c-a802-877d2af25afc
+# ╠═8182deab-8b09-491c-a802-877d2af25afc
 # ╟─b7d3507c-d244-4118-b20e-ddf662ee5df8
 # ╟─3362a9ce-15e3-403d-8747-3e685150f8e2
 # ╟─fd5b774a-6475-4346-9fdc-e71f89b4be56

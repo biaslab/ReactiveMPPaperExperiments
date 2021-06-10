@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Cite = "50d0efc5-baaf-4329-a409-faca2d9bd902"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 ForneyLab = "9fc3f58a-c2cc-5bff-9419-6a294fefdca9"

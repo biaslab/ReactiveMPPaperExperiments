@@ -1,0 +1,91 @@
+\begin{tikzpicture}[/tikz/background rectangle/.style={fill={rgb,1:red,1.0;green,1.0;blue,1.0}, draw opacity={1.0}}, show background rectangle]
+\begin{axis}[point meta max={nan}, point meta min={nan}, title={Hierarchical Gaussian Filter Benchmark (number of observations)}, title style={at={{(0.5,1)}}, anchor={south}, font={{\fontsize{10 pt}{13.0 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, legend style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid, fill={rgb,1:red,1.0;green,1.0;blue,1.0}, fill opacity={1.0}, text opacity={1.0}, font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, text={rgb,1:red,0.0;green,0.0;blue,0.0}, cells={anchor={center}}, at={(0.98, 0.02)}, anchor={south east}}, axis background/.style={fill={rgb,1:red,1.0;green,1.0;blue,1.0}, opacity={1.0}}, anchor={north west}, xshift={1.0mm}, yshift={-1.0mm}, width={150.4mm}, height={99.6mm}, scaled x ticks={false}, xlabel={Number of observations in dataset (log-scale)}, x tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, x tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, xlabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, xmode={log}, log basis x={10}, xmajorgrids={true}, xmin={42.65197092310813}, xmax={11722.787697229449}, xtick={{100.0,316.22776601683796,1000.0,3162.2776601683795,10000.0}}, xticklabels={{$10^{2.0}$,$10^{2.5}$,$10^{3.0}$,$10^{3.5}$,$10^{4.0}$}}, xtick align={inside}, xticklabel style={font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, x grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis x line*={left}, x axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, scaled y ticks={false}, ylabel={Time (in ms, log-scale)}, y tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, y tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, ylabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, font={{\fontsize{9 pt}{11.700000000000001 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, ymode={log}, log basis y={10}, ymajorgrids={true}, ymin={6.443987152966036}, ymax={10698.702518554872}, ytick={{10.0,100.0,1000.0,10000.0}}, yticklabels={{$10^{1}$,$10^{2}$,$10^{3}$,$10^{4}$}}, ytick align={inside}, yticklabel style={font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, y grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis y line*={left}, y axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, colorbar={false}]
+    \addplot[color={rgb,1:red,0.0;green,0.6056;blue,0.9787}, name path={55ced996-a46a-4999-adb2-4dac3980310e}, draw opacity={1.0}, line width={1}, solid, mark={triangle*}, mark size={3.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.0;green,0.6056;blue,0.9787}, fill opacity={1.0}, line width={0.75}, rotate={0}, solid}]
+        table[row sep={\\}]
+        {
+            \\
+            50.0  7.94862  \\
+            50.0  7.987292  \\
+            100.0  16.186112  \\
+            100.0  15.729892  \\
+            250.0  44.181781  \\
+            250.0  42.422409  \\
+            500.0  100.496788  \\
+            500.0  93.773147  \\
+            750.0  156.871436  \\
+            750.0  158.385138  \\
+            1000.0  213.92922  \\
+            1000.0  225.145137  \\
+            1500.0  319.216012  \\
+            1500.0  329.799114  \\
+            2000.0  450.954251  \\
+            2000.0  437.263788  \\
+            2500.0  620.47809  \\
+            2500.0  564.368866  \\
+            5000.0  1175.891812  \\
+            5000.0  1209.160401  \\
+            10000.0  2333.517499  \\
+            10000.0  2304.498864  \\
+        }
+        ;
+    \addlegendentry {VMP n\_itr = 5}
+    \addplot[color={rgb,1:red,0.8889;green,0.4356;blue,0.2781}, name path={e3c1262a-ea0a-43d0-8f75-199b083a3119}, draw opacity={1.0}, line width={1}, solid, mark={diamond*}, mark size={3.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.8889;green,0.4356;blue,0.2781}, fill opacity={1.0}, line width={0.75}, rotate={0}, solid}]
+        table[row sep={\\}]
+        {
+            \\
+            50.0  14.359286  \\
+            50.0  14.292233  \\
+            100.0  28.753832  \\
+            100.0  29.245322  \\
+            250.0  79.372106  \\
+            250.0  94.047644  \\
+            500.0  179.452678  \\
+            500.0  176.367006  \\
+            750.0  287.753259  \\
+            750.0  291.798614  \\
+            1000.0  425.379373  \\
+            1000.0  394.828973  \\
+            1500.0  575.999411  \\
+            1500.0  603.075623  \\
+            2000.0  805.94859  \\
+            2000.0  796.322664  \\
+            2500.0  1048.816337  \\
+            2500.0  1090.562101  \\
+            5000.0  2250.335708  \\
+            5000.0  2238.556748  \\
+            10000.0  3902.182849  \\
+            10000.0  4352.904496  \\
+        }
+        ;
+    \addlegendentry {VMP n\_itr = 10}
+    \addplot[color={rgb,1:red,0.2422;green,0.6433;blue,0.3044}, name path={70e32de8-367c-4db5-b977-ff5d702f237d}, draw opacity={1.0}, line width={1}, solid, mark={pentagon*}, mark size={3.0 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, fill={rgb,1:red,0.2422;green,0.6433;blue,0.3044}, fill opacity={1.0}, line width={0.75}, rotate={0}, solid}]
+        table[row sep={\\}]
+        {
+            \\
+            50.0  27.272895  \\
+            50.0  27.146144  \\
+            100.0  54.667473  \\
+            100.0  54.617617  \\
+            250.0  168.929588  \\
+            250.0  171.872082  \\
+            500.0  350.170864  \\
+            500.0  370.289778  \\
+            750.0  541.963703  \\
+            750.0  552.380686  \\
+            1000.0  684.455531  \\
+            1000.0  730.5535  \\
+            1500.0  1159.397572  \\
+            1500.0  1139.791703  \\
+            2000.0  1626.86196  \\
+            2000.0  1698.304484  \\
+            2500.0  2058.457733  \\
+            2500.0  1803.235891  \\
+            5000.0  4161.639591  \\
+            5000.0  4449.444684  \\
+            10000.0  8651.349491  \\
+            10000.0  8673.493208  \\
+        }
+        ;
+    \addlegendentry {VMP n\_itr = 20}
+\end{axis}
+\end{tikzpicture}

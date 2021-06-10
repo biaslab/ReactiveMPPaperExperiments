@@ -102,6 +102,23 @@ git-tree-sha1 = "01ca3823217f474243cc2c8e6e1d1f45956fe872"
 uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 version = "1.0.0"
 
+[[BibInternal]]
+git-tree-sha1 = "3cdd672174e3bae099195cf949f21c1a9ded98e5"
+uuid = "2027ae74-3657-4b95-ae00-e2f7d55c3e64"
+version = "0.2.9"
+
+[[BibParser]]
+deps = ["BibInternal", "DataStructures"]
+git-tree-sha1 = "f915a6153e95ac660d162a5b7a3cbe2e80c43cd0"
+uuid = "13533e5b-e1c2-4e57-8cef-cac5e52f6474"
+version = "0.1.14"
+
+[[Bibliography]]
+deps = ["BibInternal", "BibParser", "DataStructures"]
+git-tree-sha1 = "c3d1de7c7eaa693a7cce11b20ec6f896a4b8e44a"
+uuid = "f1be7e48-bf82-45af-a471-ae754a193061"
+version = "0.2.8"
+
 [[Bijectors]]
 deps = ["ArgCheck", "ChainRulesCore", "Compat", "Distributions", "Functors", "LinearAlgebra", "MappedArrays", "NNlib", "NonlinearSolve", "Random", "Reexport", "Requires", "SparseArrays", "Statistics", "StatsFuns"]
 git-tree-sha1 = "0ac93096caa4bc6f201e9f770297d62c7114f48c"
@@ -142,6 +159,14 @@ deps = ["Compat", "LinearAlgebra", "SparseArrays"]
 git-tree-sha1 = "4b28f88cecf5d9a07c85b9ce5209a361ecaff34a"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 version = "0.9.45"
+
+[[Cite]]
+deps = ["Bibliography", "DataStructures", "InteractiveUtils", "Pkg"]
+git-tree-sha1 = "6747ecc4528e562e9acbbf12f9c45ce4f5408eb5"
+repo-rev = "master"
+repo-url = "https://github.com/SebastianM-C/Cite.jl"
+uuid = "50d0efc5-baaf-4329-a409-faca2d9bd902"
+version = "0.1.0"
 
 [[ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random", "StaticArrays"]
