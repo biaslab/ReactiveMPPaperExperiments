@@ -84,9 +84,9 @@ version = "0.4.3"
 
 [[BangBang]]
 deps = ["Compat", "ConstructionBase", "Future", "InitialValues", "LinearAlgebra", "Requires", "Setfield", "Tables", "ZygoteRules"]
-git-tree-sha1 = "d53b1eaefd48e233545d21f5b764c8ee54df4a09"
+git-tree-sha1 = "e239020994123f08905052b9603b4ca14f8c5807"
 uuid = "198e06fe-97b7-11e9-32a5-e1d131e6ad66"
-version = "0.3.30"
+version = "0.3.31"
 
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -121,9 +121,9 @@ version = "0.2.8"
 
 [[Bijectors]]
 deps = ["ArgCheck", "ChainRulesCore", "Compat", "Distributions", "Functors", "LinearAlgebra", "MappedArrays", "NNlib", "NonlinearSolve", "Random", "Reexport", "Requires", "SparseArrays", "Statistics", "StatsFuns"]
-git-tree-sha1 = "f2c66ab910f1dd07a8fd832adffa4fc55f1d6e30"
+git-tree-sha1 = "6d2eeafea62421f0e1a69093feac46d200f9a038"
 uuid = "76274a88-744f-5084-9051-94815aaf08c4"
-version = "0.9.5"
+version = "0.9.6"
 
 [[Bzip2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -384,9 +384,9 @@ uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 
 [[DrWatson]]
 deps = ["Dates", "FileIO", "LibGit2", "MacroTools", "Pkg", "Random", "Requires", "UnPack"]
-git-tree-sha1 = "7b082b6bc2795565d959217d6c3b0179314e42fc"
+git-tree-sha1 = "b180694335d459ae755a79a86b5b57a6bbf3d7d0"
 uuid = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
-version = "2.0.4"
+version = "2.0.5"
 
 [[DynamicPPL]]
 deps = ["AbstractMCMC", "AbstractPPL", "Bijectors", "ChainRulesCore", "Distributions", "MacroTools", "Random", "ZygoteRules"]
@@ -962,9 +962,9 @@ version = "0.4.6"
 
 [[LoopVectorization]]
 deps = ["ArrayInterface", "DocStringExtensions", "IfElse", "LinearAlgebra", "OffsetArrays", "Polyester", "Requires", "SLEEFPirates", "Static", "StrideArraysCore", "ThreadingUtilities", "UnPack", "VectorizationBase"]
-git-tree-sha1 = "5a08ccac9925ebb9defac44637e2d0bfc5310ea6"
+git-tree-sha1 = "b16dde45ba9e2506358d4d7fe13f746330e8e622"
 uuid = "bdcacae8-1622-11e9-2a5c-532679323890"
-version = "0.12.36"
+version = "0.12.37"
 
 [[MCMCChains]]
 deps = ["AbstractFFTs", "AbstractMCMC", "AxisArrays", "Compat", "Dates", "Distributions", "Formatting", "IteratorInterfaceExtensions", "LinearAlgebra", "MLJModelInterface", "NaturalSort", "PrettyTables", "Random", "RecipesBase", "Serialization", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "TableTraits", "Tables"]
@@ -1393,9 +1393,9 @@ version = "0.6.21"
 
 [[SciMLBase]]
 deps = ["ArrayInterface", "CommonSolve", "ConstructionBase", "Distributed", "DocStringExtensions", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "RecipesBase", "RecursiveArrayTools", "StaticArrays", "Statistics", "Tables", "TreeViews"]
-git-tree-sha1 = "05aa1ee0b6f0c875b0d6572a77c57225e47b688f"
+git-tree-sha1 = "23b6b88b0c69a1666bd91cbf9d1216588721615c"
 uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
-version = "1.13.4"
+version = "1.13.5"
 
 [[ScientificTypes]]
 git-tree-sha1 = "b4e89a674804025c4a5843e35e562910485690c2"

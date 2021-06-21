@@ -46,7 +46,9 @@ function Base.show(io::IO, ::MIME"text/html", slider::ThrottledSlider)
                 const _ = window._
                 const c = window.console
 
-                let value = null
+                let value = $(slider.default)
+
+                sp.value = value
 
                 const dispatchEvent = () => {
                     sp.value = value

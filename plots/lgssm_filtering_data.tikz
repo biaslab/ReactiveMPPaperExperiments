@@ -1,6 +1,6 @@
 \begin{tikzpicture}[/tikz/background rectangle/.style={fill={rgb,1:red,1.0;green,1.0;blue,1.0}, draw opacity={1.0}}, show background rectangle]
 \begin{axis}[point meta max={nan}, point meta min={nan}, title={Filtering synthetic dataset}, title style={at={{(0.5,1)}}, anchor={south}, font={{\fontsize{10 pt}{13.0 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, legend style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid, fill={rgb,1:red,1.0;green,1.0;blue,1.0}, fill opacity={1.0}, text opacity={1.0}, font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, text={rgb,1:red,0.0;green,0.0;blue,0.0}, cells={anchor={center}}, at={(0.02, 0.02)}, anchor={south west}}, axis background/.style={fill={rgb,1:red,1.0;green,1.0;blue,1.0}, opacity={1.0}}, anchor={north west}, xshift={1.0mm}, yshift={-1.0mm}, width={150.4mm}, height={99.6mm}, scaled x ticks={false}, xlabel={Time step k}, x tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, x tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, xlabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, xmajorgrids={true}, xmin={-0.47}, xmax={51.47}, xtick={{0.0,10.0,20.0,30.0,40.0,50.0}}, xticklabels={{$0$,$10$,$20$,$30$,$40$,$50$}}, xtick align={inside}, xticklabel style={font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, x grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis x line*={left}, x axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, scaled y ticks={false}, ylabel={Latent states values}, y tick style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}}, y tick label style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, opacity={1.0}, rotate={0}}, ylabel style={at={(ticklabel cs:0.5)}, anchor=near ticklabel, font={{\fontsize{11 pt}{14.3 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, ymajorgrids={true}, ymin={-20}, ymax={20}, ytick={{-20.0,-10.0,0.0,10.0,20.0}}, yticklabels={{$-20$,$-10$,$0$,$10$,$20$}}, ytick align={inside}, yticklabel style={font={{\fontsize{8 pt}{10.4 pt}\selectfont}}, color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, rotate={0.0}}, y grid style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.1}, line width={0.5}, solid}, axis y line*={left}, y axis line style={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={1.0}, line width={1}, solid}, colorbar={false}]
-    \addplot[color={rgb,1:red,0.8039;green,0.0;blue,0.0}, name path={4813f0ba-51ba-49ef-9bcb-1670608cffc3}, draw opacity={1.0}, line width={1}, solid]
+    \addplot[color={rgb,1:red,0.8039;green,0.0;blue,0.0}, name path={5fc348d0-b00d-4541-ba70-9fcdb604ce65}, draw opacity={1.0}, line width={1}, solid]
         table[row sep={\\}]
         {
             \\
@@ -57,7 +57,7 @@
         }
         ;
     \addlegendentry {x[:, 1]}
-    \addplot[color={rgb,1:red,0.502;green,0.0;blue,0.502}, name path={db733469-5cf2-4554-a906-dfcdc061ca62}, draw opacity={1.0}, line width={1}, solid]
+    \addplot[color={rgb,1:red,0.502;green,0.0;blue,0.502}, name path={f0611b25-22d0-4055-8879-d0c5405fce43}, draw opacity={1.0}, line width={1}, solid]
         table[row sep={\\}]
         {
             \\
@@ -114,7 +114,7 @@
         }
         ;
     \addlegendentry {x[:, 2]}
-    \addplot[color={rgb,1:red,0.8039;green,0.0;blue,0.0}, name path={987dbc11-b76a-4a42-a5fa-2977117b6f38}, only marks, draw opacity={0.5}, line width={0}, solid, mark={*}, mark size={2.25 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.5}, fill={rgb,1:red,0.8039;green,0.0;blue,0.0}, fill opacity={0.5}, line width={0.75}, rotate={0}, solid}]
+    \addplot[color={rgb,1:red,0.8039;green,0.0;blue,0.0}, name path={c6509467-c2ca-46af-94cc-c8b138e068c7}, only marks, draw opacity={0.5}, line width={0}, solid, mark={*}, mark size={2.25 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.5}, fill={rgb,1:red,0.8039;green,0.0;blue,0.0}, fill opacity={0.5}, line width={0.75}, rotate={0}, solid}]
         table[row sep={\\}]
         {
             \\
@@ -171,7 +171,7 @@
         }
         ;
     \addlegendentry {observations[:, 1]}
-    \addplot[color={rgb,1:red,0.502;green,0.0;blue,0.502}, name path={724eeed8-30cb-4c88-bd20-566c3d4d2a64}, only marks, draw opacity={0.5}, line width={0}, solid, mark={*}, mark size={2.25 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.5}, fill={rgb,1:red,0.502;green,0.0;blue,0.502}, fill opacity={0.5}, line width={0.75}, rotate={0}, solid}]
+    \addplot[color={rgb,1:red,0.502;green,0.0;blue,0.502}, name path={d8fe0ea6-db98-4089-8187-647ab8087124}, only marks, draw opacity={0.5}, line width={0}, solid, mark={*}, mark size={2.25 pt}, mark repeat={1}, mark options={color={rgb,1:red,0.0;green,0.0;blue,0.0}, draw opacity={0.5}, fill={rgb,1:red,0.502;green,0.0;blue,0.502}, fill opacity={0.5}, line width={0.75}, rotate={0}, solid}]
         table[row sep={\\}]
         {
             \\

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.7
+# v0.14.8
 
 using Markdown
 using InteractiveUtils
@@ -65,7 +65,7 @@ where $j$ is an index of layer in hierarchy, $k$ is a time step and $f_k$ is a v
 \end{equation}
 ```
 
-In this experiemtn we will create a single time step of the graph and perform variational message passing filtering alrogithm to estimate hidden states of the system.
+In this experiment we will create a single time step of the graph and perform variational message passing filtering alrogithm to estimate hidden states of the system.
 
 For simplicity and smooth reactive graphs we will consider $\tau_z$, $\tau_y$, $\kappa$ and $\omega$ known and fixed.
 """
