@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.8
+# v0.15.1
 
 using Markdown
 using InteractiveUtils
@@ -13,27 +13,28 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ 5f80d3bc-9de9-11eb-1f38-af8cac91b6c0
-using Revise
-
-# ╔═╡ 9e746f15-2336-4503-a480-a788f62e37f6
-using DrWatson
-
-# ╔═╡ 4f959e2f-db67-4cdf-b6a7-bc0e6eb56f21
+# ╔═╡ 4ccc3ae8-be67-46b1-a228-636d86321a79
 begin 
-	@quickactivate "ReactiveMPPaperExperiments"
-	using ReactiveMPPaperExperiments
+	using Revise
+	using Pkg
 end
+
+# ╔═╡ 5f80d3bc-9de9-11eb-1f38-af8cac91b6c0
+Pkg.activate("$(@__DIR__)/../") # To disable pluto's built-in pkg manager
 
 # ╔═╡ 1a6b8f2a-537e-44c0-90fe-afb57c2086f1
 begin
-	using PlutoUI, Images
+	
+	using ReactiveMPPaperExperiments
+	using DrWatson, PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
 	using BenchmarkTools
+	
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
 	end
+	
 end
 
 # ╔═╡ 8b370073-4495-4181-9edc-379783091753
@@ -98,7 +99,6 @@ md"""
 	}
 	
 	yv = datavar(Float64)
-	
 	yv ~ NormalMeanPrecision(sv, τ_y)
 	
 	return zv_prior, sv_prior, gcv, zv, sv, yv
@@ -133,11 +133,19 @@ end
 begin
 	
 	seed_slider = @bind(
-		seed, ThrottledSlider(1:100, default = 34, show_value = true)
+		seed, ThrottledSlider(1:100, default = 43, show_value = true)
 	)
 	
 	n_slider = @bind(
-		n, ThrottledSlider(1:1000, default = 150, show_value = true)
+		n, ThrottledSlider(1:1000, default = 100, show_value = true)
+	)
+	
+	nitr_slider = @bind(
+		nitr, ThrottledSlider(1:100, default = 10, show_value = true)
+	)
+	
+	gh_n_slider = @bind(
+		gh_n, ThrottledSlider(1:13, default = 9, show_value = true)
 	)
 	
 	τ_z_slider = @bind(
@@ -145,7 +153,7 @@ begin
 	)
 	
 	τ_y_slider = @bind(
-		τ_y, ThrottledSlider(0.01:0.01:10.0, default = 1.0, show_value = true)
+		τ_y, ThrottledSlider(0.01:0.01:10.0, default = 0.1, show_value = true)
 	)
 	
 	κ_slider = @bind(
@@ -153,74 +161,70 @@ begin
 	)
 	
 	ω_slider = @bind(
-		ω, ThrottledSlider(-10.0:0.1:10.0, default = 0.0, show_value = true)
+		ω, ThrottledSlider(-10.0:0.1:10.0, default = 2.0, show_value = true)
 	)
 	
 end;
 
 # ╔═╡ ebb8d862-29ab-4a78-a9ed-91774904bab8
-	z_data, s_data, y_data = generate_test_data(n, τ_z, τ_y, κ, ω, seed = seed);
+z_data, s_data, y_data = generate_test_data(n, τ_z, τ_y, κ, ω, seed = seed);
 
-# ╔═╡ a8f1b2f6-3788-4545-8292-bf0e468c465f
-function redirect_prior(marginal_of, scheduler, callback)
-	return subscribe!(
-		getmarginal(marginal_of, IncludeAll()) |> schedule_on(scheduler), 
-		callback
-	)
-end
-
-# ╔═╡ cb09a131-abd1-4c70-8c80-95508368ac0a
+# ╔═╡ 363a8fcd-ff86-4d8e-bafc-92e8e6324ffe
 function inference(data, nitr, gh_n, τ_z, τ_y, κ, ω)
 
     zm = keep(Marginal)
     sm = keep(Marginal)
-	
-    fe = ScoreActor(Float64)
+    fe = keep(Float64)
 
+	# We create a single time section of a full graph here
     model, (zv_prior, sv_prior, gcv, zv, sv, yv) = hgf(gh_n, τ_z, τ_y, κ, ω)
-    
-	rd_scheduler = PendingScheduler()
 	
+	# We subscribe on all posterior marginal updates and free energy values
+	zmsub = subscribe!(getmarginal(zv), zm)
+	smsub = subscribe!(getmarginal(sv), sm)
 	fesub = subscribe!(score(Float64, BetheFreeEnergy(), model), fe)
 	
-    zsub = subscribe!(getmarginal(zv) |> schedule_on(rd_scheduler), zm)
-    ssub = subscribe!(getmarginal(sv) |> schedule_on(rd_scheduler), sm)
-    
-	z_prior_sub = redirect_prior(zv, rd_scheduler, (posterior) -> begin
-		update!(zv_prior[1], mean(posterior))
-    	update!(zv_prior[2], precision(posterior))	
-	end)
-	
-	s_prior_sub = redirect_prior(sv, rd_scheduler, (posterior) -> begin
-		update!(sv_prior[1], mean(posterior))
-    	update!(sv_prior[2], precision(posterior))	
-	end)
-	
-	setmarginal!(sv, NormalMeanVariance(0.0, 5.0))
-    setmarginal!(zv, NormalMeanVariance(0.0, 5.0))
-	
+	# We set an initial joint marginal around GCV node to be able 
+	# to start inference procedure
     setmarginal!(gcv, :y_x, MvNormalMeanCovariance([ 0.0, 0.0 ], [ 5.0, 5.0 ]))
 	
-	release!(rd_scheduler)
+	# We keep track of 'current' posterior marginals at time step k
+	sv_k = NormalMeanVariance(0.0, 5.0)
+	zv_k = NormalMeanVariance(0.0, 5.0)
+	
+	setmarginal!(sv, sv_k)
+    setmarginal!(zv, zv_k)
 
+	# We run our online inference procedure for each observation in data 
     for observation in data
-		update!(yv, observation)
-		repeat!(model, nitr)
-		release!(rd_scheduler)
-		release!(fe)
+		
+		# To perform multiple VMP iterations we pass our data multiple times
+		# It forces an inference backend to react on data multiple times and 
+		# hence update posterior marginals multiple times
+		for i in 1:nitr
+			update!(zv_prior[1], mean(zv_k))
+			update!(zv_prior[2], precision(zv_k))
+			update!(sv_prior[1], mean(sv_k))
+			update!(sv_prior[2], precision(sv_k))
+			update!(yv, observation)
+		end
+
+		# Update current posterior marginals at time step k
+		zv_k = last(zm)
+		sv_k = last(sm)
     end
-        
-    unsubscribe!(z_prior_sub)
-    unsubscribe!(s_prior_sub)
-	unsubscribe!(zsub)
-	unsubscribe!(ssub)
+    
+	# It is a good practice to always unsubscribe from streams of data 
+	# at the end of the inference procedure
+	unsubscribe!(zmsub)
+	unsubscribe!(smsub)
 	unsubscribe!(fesub)
     
     return map(getvalues, (fe, zm, sm))
 end
 
 # ╔═╡ 0b0f6b07-7a88-413b-b3ad-a3de3ddc2e7e
-fe, zm, sm = inference(y_data, 10, 9, τ_z, τ_y, κ, ω);
+fe, zm, sm = inference(y_data, nitr, gh_n, τ_z, τ_y, κ, ω);
 
 # ╔═╡ 1594d934-9c3c-477b-9931-bc265af18046
 md"""
@@ -228,6 +232,8 @@ md"""
 | ---- | -------------- |
 | seed | $(seed_slider) |
 | n    | $(n_slider)    |
+| nitr | $(nitr_slider)    |
+| gh_n | $(gh_n_slider)    |
 | τ_z  | $(τ_z_slider)  |
 | τ_y  | $(τ_y_slider)  |
 | κ  | $(κ_slider)  |
@@ -238,20 +244,24 @@ md"""
 begin 
 	local p1 = plot()
 	local p2 = plot()
+	local shift = nitr
 
-	p1 = plot!(p1, z_data)
-	p1 = plot!(p1, mean.(zm), ribbon = std.(zm), legend = false)
+	p1 = plot!(p1, z_data, palette = [ :red3, :green ])
+	p1 = plot!(p1, mean.(zm[1:shift:end]), ribbon = std.(zm), legend = false)
 
 
 	p2 = plot!(p2, s_data)
-	p2 = plot!(p2, mean.(sm), ribbon = std.(sm), legend = false)
+	p2 = plot!(p2, mean.(sm[1:shift:end]), ribbon = std.(sm), legend = false)
+	p2 = scatter!(y_data, ms = 1)
 
 	
-	p3 = plot(fe, legend = false)
+	local rfe = sum(reshape(fe, (nitr, n)), dims = 2)
 	
-	@saveplot p1 "hgf_inference_1"
-	@saveplot p1 "hgf_inference_2"
-	@saveplot p1 "hgf_inference_"
+	p3 = plot(rfe, legend = false)
+	
+	@saveplot p1 "hgf_inference_z"
+	@saveplot p2 "hgf_inference_s"
+	@saveplot p3 "hgf_inference_fe"
 	
 	plot(p1, p2, p3, layout = @layout([ a b; c ]))
 end
@@ -325,8 +335,6 @@ begin
 		local benchmarks = map(f -> f["benchmark"], filtered)
 		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
 
-
-
 		p = plot!(
 			p, range, timings,
 			yscale = :log10, xscale = :log10,
@@ -365,8 +373,8 @@ begin
 
 
 		p = plot!(
-			p, string.(range), timings,
-			yscale = :log10, xscale = :log10,
+			p, range, timings,
+			yscale = :log10, xscale = :log10, xticks = (range, string.(range)),
 			markershape = mshape, label = "n_observations = $(target_n)", ylim = ylim
 		)
 	end
@@ -375,9 +383,8 @@ begin
 end
 
 # ╔═╡ Cell order:
+# ╠═4ccc3ae8-be67-46b1-a228-636d86321a79
 # ╠═5f80d3bc-9de9-11eb-1f38-af8cac91b6c0
-# ╠═9e746f15-2336-4503-a480-a788f62e37f6
-# ╠═4f959e2f-db67-4cdf-b6a7-bc0e6eb56f21
 # ╠═1a6b8f2a-537e-44c0-90fe-afb57c2086f1
 # ╟─8b370073-4495-4181-9edc-379783091753
 # ╟─6418daac-7b3f-49e7-94d6-0e76abdcffac
@@ -385,11 +392,10 @@ end
 # ╠═696dd629-f0d3-4608-9de2-82ea6b1a7253
 # ╠═eb491feb-1dfe-4787-90eb-1e0ecff07438
 # ╠═ebb8d862-29ab-4a78-a9ed-91774904bab8
-# ╠═a8f1b2f6-3788-4545-8292-bf0e468c465f
-# ╠═cb09a131-abd1-4c70-8c80-95508368ac0a
+# ╠═363a8fcd-ff86-4d8e-bafc-92e8e6324ffe
 # ╠═0b0f6b07-7a88-413b-b3ad-a3de3ddc2e7e
 # ╟─1594d934-9c3c-477b-9931-bc265af18046
-# ╟─7b68e3c5-2dc6-4310-b437-8ab12f924dd6
+# ╠═7b68e3c5-2dc6-4310-b437-8ab12f924dd6
 # ╟─b9bd5a69-16fb-4b6b-84c7-80a514c91ccf
 # ╠═cb60be26-87f5-4cf7-b3b4-d16197a7a065
 # ╠═597b54c3-d8ce-4aed-a961-9a0fc9640a22

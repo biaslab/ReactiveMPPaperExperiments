@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.2
+# v0.15.1
 
 using Markdown
 using InteractiveUtils
@@ -14,25 +14,26 @@ macro bind(def, element)
 end
 
 # ╔═╡ dafb5428-9d09-11eb-1d29-b9cd53c89545
-using Revise
+begin 
+	using Revise
+	using Pkg
+end
 
 # ╔═╡ 2b6b67e0-bdd3-44d9-abc5-13482f0a1056
-using DrWatson
-
-# ╔═╡ 2547289c-23e6-4f6b-beec-c3889a44d9ba
-begin
-	@quickactivate "ReactiveMPPaperExperiments"
-	using ReactiveMPPaperExperiments
-end
+Pkg.activate("$(@__DIR__)/../") # To disable pluto's built-in pkg manager
 
 # ╔═╡ 2a441550-27d1-4d02-870d-02cc9fdbba40
 begin
-	using PlutoUI, Images
+
+    using ReactiveMPPaperExperiments
+	using DrWatson, PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
 	end
+
 end
 
 # ╔═╡ f0d8d8a8-a881-4d83-b662-eec38dd732fd
@@ -159,7 +160,6 @@ As we can see θ parameter has been estimated correctly with a very high precisi
 # ╔═╡ Cell order:
 # ╠═dafb5428-9d09-11eb-1d29-b9cd53c89545
 # ╠═2b6b67e0-bdd3-44d9-abc5-13482f0a1056
-# ╠═2547289c-23e6-4f6b-beec-c3889a44d9ba
 # ╠═2a441550-27d1-4d02-870d-02cc9fdbba40
 # ╟─f0d8d8a8-a881-4d83-b662-eec38dd732fd
 # ╟─f34341cb-f999-4df0-a0a4-856a4ec27dd2

@@ -5,11 +5,9 @@ version = "0.1.0"
 
 [deps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
-Cite = "50d0efc5-baaf-4329-a409-faca2d9bd902"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
 ForneyLab = "9fc3f58a-c2cc-5bff-9419-6a294fefdca9"
-GraphPPL = "b3f8163a-e979-4e85-b43e-1f63d8c8b42c"
 ImageMagick = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"

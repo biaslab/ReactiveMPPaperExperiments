@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.7
+# v0.15.1
 
 using Markdown
 using InteractiveUtils
@@ -14,26 +14,27 @@ macro bind(def, element)
 end
 
 # ╔═╡ d160581c-9d1f-11eb-05f7-c5f29954488b
-using Revise
+begin 
+	using Revise
+	using Pkg
+end
 
 # ╔═╡ 95beaa74-12b5-4bf1-aeb1-a9e726c49cc9
-using DrWatson
-
-# ╔═╡ 6f1ba6c5-9359-40a0-b069-7194dee87e14
-begin 
-	@quickactivate "ReactiveMPPaperExperiments"
-	using ReactiveMPPaperExperiments
-end
+Pkg.activate("$(@__DIR__)/../") # To disable pluto's built-in pkg manager
 
 # ╔═╡ f1cede2f-0e34-497b-9913-3204e9c75fd7
 begin
-	using PlutoUI, Images
+
+	using ReactiveMPPaperExperiments
+	using DrWatson, PlutoUI, Images
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
 	using BenchmarkTools, DataFrames, Query, LinearAlgebra
+
 	if !in(:PlutoRunner, names(Main))
 		using PGFPlotsX
 		pgfplotsx()
 	end
+	
 end
 
 # ╔═╡ bbb878a0-1854-4bc4-9274-47edc8899795
@@ -990,7 +991,6 @@ end
 # ╔═╡ Cell order:
 # ╠═d160581c-9d1f-11eb-05f7-c5f29954488b
 # ╠═95beaa74-12b5-4bf1-aeb1-a9e726c49cc9
-# ╠═6f1ba6c5-9359-40a0-b069-7194dee87e14
 # ╠═f1cede2f-0e34-497b-9913-3204e9c75fd7
 # ╟─bbb878a0-1854-4bc4-9274-47edc8899795
 # ╟─5fc0ccdf-70e2-46ac-a77e-34f01b885dec
@@ -1011,7 +1011,7 @@ end
 # ╠═fb94e6e9-10e4-4f9f-95e6-43cdd9184c09
 # ╟─84c171fc-fd79-43f2-942f-7ec6acd63c14
 # ╠═8981b0f8-9ff2-4c90-a958-0fe4da538809
-# ╟─cf1426f1-98d9-402a-80f6-27545fd06d94
+# ╠═cf1426f1-98d9-402a-80f6-27545fd06d94
 # ╟─1c6ee7dc-3ecc-43f6-a467-d21ef9c79b34
 # ╟─9d4eecce-37d5-4177-8c52-1ad0da74e7ce
 # ╠═7671e1cc-4ff6-4c2b-b811-aa389a82c6b2
