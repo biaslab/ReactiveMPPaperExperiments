@@ -27,14 +27,11 @@ begin
 
 	using ReactiveMPPaperExperiments
 	using DrWatson, PlutoUI, Images
-    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	using CairoMakie
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random
 	using BenchmarkTools, DataFrames, Query, LinearAlgebra
-
-	if !in(:PlutoRunner, names(Main))
-		using PGFPlotsX
-		pgfplotsx()
-	end
 	
+	import ReactiveMP: update!
 end
 
 # ╔═╡ bbb878a0-1854-4bc4-9274-47edc8899795
@@ -197,30 +194,50 @@ md"""
 You may try to change data generation process parameters to immediatelly see how it affects data. We plot lines for real states $x_i$, and we plot scatter dots for noisy observations $y_i$.
 """
 
-# ╔═╡ 099aa726-7694-4b38-875d-a015effc9d3a
+# ╔═╡ 5becdba8-d38f-4d75-9c24-6790c73ff48b
 begin 
-	local reshape_data = (data) -> transpose(reduce(hcat, data))
+	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
-	local ylimit = (-20, 20)
-	
-	local x_label = [ "x[:, 1]" "x[:, 2]" ]
-	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
-	
-	local x_reshaped = x_smoothing |> reshape_data
-	local y_reshaped = y_smoothing |> reshape_data
-	
-	local p = plot(
-		title = "Smoothing synthetic dataset", titlefontsize = 10,
-		xlabel = "Time step k", xguidefontsize = 8,
-		ylabel = "Latent states values", yguidefonrsize = 8
-	)
+	local ylimit = (-15, 20)	
 	local range = 1:n_smoothing
 	
-	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
-	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
-	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	local fig = Figure(resolution = (550, 350))
+	local ax  = Makie.Axis(fig[1, 1])
 	
-	@saveplot p "lgssm_smoothing_data"
+	ylims!(ax, ylimit)
+	
+	# ax.title = "Smoothing synthetic data"
+	# ax.titlesize = 20
+	
+	ax.xlabel = "Time step k"
+	ax.xlabelsize = 16
+	
+	ax.ylabel = "Latent states"
+	ax.ylabelsize = 16
+	
+	lines!(ax, 
+		range, x_smoothing |> edim(1), color = :red3, label = "x[:, 1]",
+		linewidth = 1.75
+	)
+	scatter!(ax, 
+		range, y_smoothing |> edim(1), color = (:red3, 0.65), 
+		markersize = 12, marker = :cross,
+		label = "y[:, 1]"
+	)
+	
+	lines!(ax, 
+		range, x_smoothing |> edim(2), color = :purple, label = "x[:, 2]",
+		linewidth = 1.75, linestyle = :dash
+	)
+	scatter!(ax, range, 
+		y_smoothing |> edim(2), color = (:purple, 0.65), 
+		markersize = 8, marker = :circle,
+		label = "y[:, 2]"
+	)
+	
+	axislegend(ax, position = :lt)
+	
+	@saveplot fig "lgssm_smoothing_data"
 end
 
 # ╔═╡ 2530cf00-52c1-4c44-8d62-a3e4f0d411bc
@@ -286,37 +303,78 @@ x_smoothing_estimated, bfe_smoothing = inference_full_graph(
 
 # ╔═╡ cf1426f1-98d9-402a-80f6-27545fd06d94
 begin
-	local reshape_data = (data) -> transpose(reduce(hcat, data))
+	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
-	local ylimit = (-18, 18)
+	local ylimit = (-15, 20)
 	
-	local x_label = [ "x[:, 1]" "x[:, 2]" ]
-	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
-	local i_label = [ "inferred[:, 1]" "inferred[:, 2]" ]
-	
-	local x_reshaped = x_smoothing |> reshape_data
-	local y_reshaped = y_smoothing |> reshape_data
-	
-	local x_inferred_means = mean.(x_smoothing_estimated) |> reshape_data
-	local x_inferred_stds  = diag.(std.(x_smoothing_estimated)) |> reshape_data
-	
-	local p = plot(
-		# title = "Smoothing inference results", titlefontsize = 10,
-		# xlabel = "Time step k", xguidefontsize = 8,
-		# ylabel = "Latent states values", yguidefonrsize = 8
-	)
+	local x_inferred_means = mean.(x_smoothing_estimated)
+	local x_inferred_stds  = diag.(std.(x_smoothing_estimated))
 	local range = 1:n_smoothing
 	
-	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
-	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
-	p = plot!(
-		p, range, x_inferred_means, ribbon = x_inferred_stds, 
-		label = i_label, fillalpha = 0.3, palette = [ :orange, :green ]
-	)
-
-	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	local fig = Figure(resolution = (550, 350))
+	local ax  = Makie.Axis(fig[1, 1])
 	
-	@saveplot p "lgssm_smoothing_inference"
+	ylims!(ax, ylimit)
+	
+	# ax.title = "Smoothing inference results"
+	# ax.titlesize = 20
+	
+	ax.xlabel = "Time step k"
+	ax.xlabelsize = 16
+	
+	ax.ylabel = "Latent states"
+	ax.ylabelsize = 16
+	
+	# Real dim1
+	
+	lines!(ax, 
+		range, x_smoothing |> edim(1), color = :red3, label = "x[:, 1]",
+		linewidth = 1.75
+	)
+	scatter!(ax, 
+		range, y_smoothing |> edim(1), color = (:red3, 0.35), 
+		markersize = 10, marker = :cross,
+	)
+	
+	# Estimated dim1
+	
+	lines!(ax,
+		range, x_inferred_means |> edim(1), color = :teal, label = "estimated[:, 1]"
+	)
+	band!(ax,
+		range, 
+		(x_inferred_means |> edim(1)) .+ (x_inferred_stds |> edim(1)),
+		(x_inferred_means |> edim(1)) .- (x_inferred_stds |> edim(1)),
+		color = (:teal, 0.5)
+	)
+	
+	
+	# Real dim2
+	
+	lines!(ax, 
+		range, x_smoothing |> edim(2), color = :purple, label = "x[:, 2]",
+		linewidth = 1.75, linestyle = :dash
+	)
+	scatter!(ax, range, 
+		y_smoothing |> edim(2), color = (:purple, 0.35), 
+		markersize = 6, marker = :circle,
+	)
+	
+	# Estimated dim2
+	
+	lines!(ax,
+		range, x_inferred_means |> edim(2), color = :blue, label = "estimated[:, 2]"
+	)
+	band!(ax,
+		range, 
+		(x_inferred_means |> edim(2)) .+ (x_inferred_stds |> edim(2)),
+		(x_inferred_means |> edim(2)) .- (x_inferred_stds |> edim(2)),
+		color = (:blue, 0.3)
+	)
+	
+	axislegend(ax, position = :lt)
+	
+	@saveplot fig "lgssm_smoothing_inference"
 end
 
 # ╔═╡ 1c6ee7dc-3ecc-43f6-a467-d21ef9c79b34
@@ -448,28 +506,48 @@ x_filtering, y_filtering = generate_data(
 
 # ╔═╡ b006a807-016d-41aa-91ec-a02a4c270990
 begin 
-	local reshape_data = (data) -> transpose(reduce(hcat, data))
+	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
-	local ylimit = (-20, 20)
-	
-	local x_label = [ "x[:, 1]" "x[:, 2]" ]
-	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
-	
-	local x_reshaped = x_filtering |> reshape_data
-	local y_reshaped = y_filtering |> reshape_data
-	
-	local p = plot(
-		title  = "Filtering synthetic dataset", titlefontsize = 10,
-		xlabel = "Time step k", xguidefontsize = 8,
-		ylabel = "Latent states values", yguidefonrsize = 8
-	)
+	local ylimit = (-15, 20)	
 	local range = 1:n_filtering
 	
-	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
-	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
-	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	local fig = Figure(resolution = (550, 350))
+	local ax  = Makie.Axis(fig[1, 1])
 	
-	@saveplot p "lgssm_filtering_data"
+	ylims!(ax, ylimit)
+	
+	# ax.title = "Filtering synthetic data"
+	# ax.titlesize = 20
+	
+	ax.xlabel = "Time step k"
+	ax.xlabelsize = 16
+	
+	ax.ylabel = "Latent states"
+	ax.ylabelsize = 16
+	
+	lines!(ax, 
+		range, x_filtering |> edim(1), color = :red3, label = "x[:, 1]",
+		linewidth = 1.75
+	)
+	scatter!(ax, 
+		range, y_filtering |> edim(1), color = (:red3, 0.65), 
+		markersize = 12, marker = :cross,
+		label = "y[:, 1]"
+	)
+	
+	lines!(ax, 
+		range, x_filtering |> edim(2), color = :purple, label = "x[:, 2]",
+		linewidth = 1.75, linestyle = :dash
+	)
+	scatter!(ax, range, 
+		y_filtering |> edim(2), color = (:purple, 0.65), 
+		markersize = 8, marker = :circle,
+		label = "y[:, 2]"
+	)
+	
+	axislegend(ax, position = :lt)
+	
+	@saveplot fig "lgssm_filtering_data"
 end
 
 # ╔═╡ 952cce56-c832-47cc-95ec-6c0d114add79
@@ -494,37 +572,78 @@ x_filtering_estimated, bfe_filtering = inference_single_time_segment(
 
 # ╔═╡ 3beedf02-e870-4da9-89f4-a2667e5bee18
 begin
-	local reshape_data = (data) -> transpose(reduce(hcat, data))
+	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
-	local ylimit = (-18, 18)
+	local ylimit = (-15, 20)
 	
-	local x_label = [ "x[:, 1]" "x[:, 2]" ]
-	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
-	local i_label = [ "inferred[:, 1]" "inferred[:, 2]" ]
+	local x_inferred_means = mean.(x_filtering_estimated)
+	local x_inferred_stds  = diag.(std.(x_filtering_estimated))
+	local range = 1:n_filtering
 	
-	local x_reshaped = x_filtering |> reshape_data
-	local y_reshaped = y_filtering |> reshape_data
+	local fig = Figure(resolution = (550, 350))
+	local ax  = Makie.Axis(fig[1, 1])
 	
-	local x_inferred_means = mean.(x_filtering_estimated) |> reshape_data
-	local x_inferred_stds  = diag.(std.(x_filtering_estimated)) |> reshape_data
+	ylims!(ax, ylimit)
 	
-	local p = plot(
-		# title = "Fileting inference results", titlefontsize = 10,
-		# xlabel = "Time step k", xguidefontsize = 8,
-		# ylabel = "Latent states values", yguidefonrsize = 8
+	# ax.title = "Filtering inference results"
+	# ax.titlesize = 20
+	
+	ax.xlabel = "Time step k"
+	ax.xlabelsize = 16
+	
+	ax.ylabel = "Latent states"
+	ax.ylabelsize = 16
+	
+	# Real dim1
+	
+	lines!(ax, 
+		range, x_filtering |> edim(1), color = :red3, label = "x[:, 1]",
+		linewidth = 1.75
 	)
-	local range = 1:n_smoothing
-	
-	p = plot!(p, range, x_reshaped, label = x_label, palette = [ :red3, :purple ])
-	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
-	p = plot!(
-		p, range, x_inferred_means, ribbon = x_inferred_stds, 
-		label = i_label, fillalpha = 0.3, palette = [ :orange, :green ]
+	scatter!(ax, 
+		range, y_filtering |> edim(1), color = (:red3, 0.35), 
+		markersize = 10, marker = :cross,
 	)
-
-	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
 	
-	@saveplot p "lgssm_filtering_inference"
+	# Estimated dim1
+	
+	lines!(ax,
+		range, x_inferred_means |> edim(1), color = :teal, label = "estimated[:, 1]"
+	)
+	band!(ax,
+		range, 
+		(x_inferred_means |> edim(1)) .+ (x_inferred_stds |> edim(1)),
+		(x_inferred_means |> edim(1)) .- (x_inferred_stds |> edim(1)),
+		color = (:teal, 0.5)
+	)
+	
+	
+	# Real dim2
+	
+	lines!(ax, 
+		range, x_filtering |> edim(2), color = :purple, label = "x[:, 2]",
+		linewidth = 1.75, linestyle = :dash
+	)
+	scatter!(ax, range, 
+		y_filtering |> edim(2), color = (:purple, 0.35), 
+		markersize = 6, marker = :circle,
+	)
+	
+	# Estimated dim2
+	
+	lines!(ax,
+		range, x_inferred_means |> edim(2), color = :blue, label = "estimated[:, 2]"
+	)
+	band!(ax,
+		range, 
+		(x_inferred_means |> edim(2)) .+ (x_inferred_stds |> edim(2)),
+		(x_inferred_means |> edim(2)) .- (x_inferred_stds |> edim(2)),
+		color = (:blue, 0.3)
+	)
+	
+	axislegend(ax, position = :lt, labelsize = 16)
+	
+	@saveplot fig "lgssm_filtering_inference"
 end
 
 # ╔═╡ c082bbff-08ce-461e-a096-0df699a6f12d
@@ -698,28 +817,44 @@ begin
 	local f_timings    = map(t -> t.time, minimum.(f_benchmarks)) ./ 1_000_000
 	local f_memories   = map(t -> t.memory, minimum.(f_benchmarks)) ./ 1024
 	
-	local p = plot(
-		title = "Linear Gaussian State Space Model Benchmark",
-		titlefontsize = 10, legend = :bottomright,
-		xlabel = "Number of observations in dataset (log-scale)", 
-		xguidefontsize = 9,
-		ylabel = "Time (in ms, log-scale)", 
-		yguidefontsize = 9
+	fig = Figure(resolution = (500, 350))
+	
+	ax = Makie.Axis(fig[1, 1])
+	
+	ax.xlabel = "Number of observartions in static dataset (log-scale)"
+	ax.xlabelsize = 16
+	ax.ylabel = "Time (in ms, log-scale)"
+	ax.ylabelsize = 16
+	ax.yscale = Makie.pseudolog10
+	ax.xscale = Makie.pseudolog10
+	
+	ax.yticks = (
+		[ 3, 5, 10, 20, 50, 100, 200, 500, 1000, 2000 ], 
+		[ "3", "5", "10", "20", "50", "100", "200", "500", "1e3", "2e3" ]
 	)
 	
-	p = plot!(
-		p, s_range, s_timings, 
-		yscale = :log10, xscale = :log10,
-		markershape = :utriangle, label = "Smoothing"
+	ax.xticks = (
+		[ 50, 100, 250, 500, 1000, 2000, 5000, 10000 ], 
+		[ "50", "100", "250", "500", "1e3", "2e3", "5e3", "1e4" ]
 	)
 	
-	p = plot!(
-		p, f_range, f_timings, 
-		yscale = :log10, xscale = :log10,
-		markershape = :diamond, label = "Filtering"
+	lines!(ax,
+		s_range, s_timings, label = "Smoothing", linewidth = 3
+	)
+	scatter!(ax,
+		s_range, s_timings, marker = :utriangle, markersize = 16,
 	)
 	
-	@saveplot p "lgssm_benchmark"
+	lines!(ax,
+		f_range, f_timings, label = "Filtering", linewidth = 3,
+	)
+	scatter!(ax,
+		f_range, f_timings, marker = :diamond, markersize = 16,
+	)
+	
+	axislegend(ax, position = :lt, labelsize = 16)
+	
+	@saveplot fig "lgssm_benchmark"
 end
 
 # ╔═╡ aa64496d-a65c-4b38-88b6-b5f9f14c447d
@@ -793,42 +928,129 @@ x_turing_estimated = inference_turing(
 );
 
 # ╔═╡ 43649fce-8ee4-42a9-819b-ba17fa9de998
-begin 
+# begin 
+# 	local reshape_data = (data) -> transpose(reduce(hcat, data))
+# 	local reshape_turing_data = (data) -> transpose(
+# 		reshape(data, (2, Int(length(data) / 2)))
+# 	)
+	
+# 	local ylimit = (-20, 20)
+	
+# 	local x_label = [ "x[:, 1]" "x[:, 2]" ]
+# 	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
+# 	local i_label = [ "inferred[:, 1]" "inferred[:, 2]" ]
+	
+# 	local x_reshaped = x_turing |> reshape_data
+# 	local y_reshaped = y_turing |> reshape_data
+	
+# 	local samples = get(x_turing_estimated, :x)
+# 	local x_inferred_means = reshape_turing_data(
+# 		[ mean(samples.x[i].data) for i in 1:2n_turing ]
+# 	)
+# 	local x_inferred_stds = reshape_turing_data(
+# 		[std(samples.x[i].data) for i in 1:2n_turing]
+# 	)
+	
+# 	local p = plot(
+# 		title = "Turing HMC inference results", titlefontsize = 10,
+# 		xlabel = "Time step k", xguidefontsize = 8,
+# 		ylabel = "Latent states values", yguidefonrsize = 8
+# 	)
+# 	local range = 1:n_turing
+	
+# 	p = plot!(p, range, x_reshaped, label = x_label)
+# 	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
+# 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
+# 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	
+# 	@saveplot p "lgssm_turing_inference"
+# end
+
+begin
+	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	local reshape_data = (data) -> transpose(reduce(hcat, data))
 	local reshape_turing_data = (data) -> transpose(
 		reshape(data, (2, Int(length(data) / 2)))
 	)
 	
-	local ylimit = (-20, 20)
-	
-	local x_label = [ "x[:, 1]" "x[:, 2]" ]
-	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
-	local i_label = [ "inferred[:, 1]" "inferred[:, 2]" ]
-	
-	local x_reshaped = x_turing |> reshape_data
-	local y_reshaped = y_turing |> reshape_data
+	local ylimit = (-15, 20)
 	
 	local samples = get(x_turing_estimated, :x)
 	local x_inferred_means = reshape_turing_data(
 		[ mean(samples.x[i].data) for i in 1:2n_turing ]
-	)
+	) |> collect |> eachrow |> collect
 	local x_inferred_stds = reshape_turing_data(
 		[std(samples.x[i].data) for i in 1:2n_turing]
-	)
+	) |> collect |> eachrow |> collect
 	
-	local p = plot(
-		title = "Turing HMC inference results", titlefontsize = 10,
-		xlabel = "Time step k", xguidefontsize = 8,
-		ylabel = "Latent states values", yguidefonrsize = 8
-	)
+	@show x_inferred_means
+	
 	local range = 1:n_turing
 	
-	p = plot!(p, range, x_reshaped, label = x_label)
-	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
-	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
-	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
+	local fig = Figure(resolution = (550, 350))
+	local ax  = Makie.Axis(fig[1, 1])
 	
-	@saveplot p "lgssm_turing_inference"
+	ylims!(ax, ylimit)
+	
+	# ax.title = "Filtering inference results"
+	# ax.titlesize = 20
+	
+	ax.xlabel = "Time step k"
+	ax.xlabelsize = 16
+	
+	ax.ylabel = "Latent states"
+	ax.ylabelsize = 16
+	
+	# Real dim1
+	
+	lines!(ax, 
+		range, x_turing |> edim(1), color = :red3, label = "x[:, 1]",
+		linewidth = 1.75
+	)
+	scatter!(ax, 
+		range, y_turing |> edim(1), color = (:red3, 0.35), 
+		markersize = 10, marker = :cross,
+	)
+	
+	# Estimated dim1
+	
+	lines!(ax,
+		range, x_inferred_means |> edim(1), color = :teal, label = "estimated[:, 1]"
+	)
+	band!(ax,
+		range, 
+		(x_inferred_means |> edim(1)) .+ (x_inferred_stds |> edim(1)),
+		(x_inferred_means |> edim(1)) .- (x_inferred_stds |> edim(1)),
+		color = (:teal, 0.5)
+	)
+	
+	
+	# Real dim2
+	
+	lines!(ax, 
+		range, x_turing |> edim(2), color = :purple, label = "x[:, 2]",
+		linewidth = 1.75, linestyle = :dash
+	)
+	scatter!(ax, range, 
+		y_turing |> edim(2), color = (:purple, 0.35), 
+		markersize = 6, marker = :circle,
+	)
+	
+	# Estimated dim2
+	
+	lines!(ax,
+		range, x_inferred_means |> edim(2), color = :blue, label = "estimated[:, 2]"
+	)
+	band!(ax,
+		range, 
+		(x_inferred_means |> edim(2)) .+ (x_inferred_stds |> edim(2)),
+		(x_inferred_means |> edim(2)) .- (x_inferred_stds |> edim(2)),
+		color = (:blue, 0.3)
+	)
+	
+	axislegend(ax, position = :lt, labelsize = 16)
+	
+	@saveplot fig "lgssm_turing_inference"
 end
 
 # ╔═╡ 1751a9f2-2a5f-4cd7-8f0d-d5a3cae5518f
@@ -951,41 +1173,59 @@ begin
 			b["nsamples"] === 500
 	end
 	
+	local ylimits = (0, 5e10)
+	
 	@assert length(s_filtered) !== 0 "Empty benchmark set"
 	@assert length(t_filtered) !== 0 "Empty benchmark set"
 	
 	local s_range      = map(f -> f["n"], s_filtered)
 	local s_benchmarks = map(f -> f["benchmark"], s_filtered)
 	local s_timings    = map(t -> t.time, minimum.(s_benchmarks)) ./ 1_000_000
+	local s_stds       = map(t -> t.time, std.(s_benchmarks)) ./ 1_000_000
 	local s_memories   = map(t -> t.memory, minimum.(s_benchmarks)) ./ 1024
 	
 	local t_range      = map(f -> f["n"], t_filtered)
 	local t_benchmarks = map(f -> f["benchmark"], t_filtered)
 	local t_timings    = map(t -> t.time, minimum.(t_benchmarks)) ./ 1_000_000
+	local t_stds       = map(t -> t.time, std.(t_benchmarks)) ./ 1_000_000
 	local t_memories   = map(t -> t.memory, minimum.(t_benchmarks)) ./ 1024
+
+	local fig = Figure(resolution = (500, 300))
 	
-	local p = plot(
-		title = "Linear Gaussian State Space Model Benchmark",
-		titlefontsize = 10, legend = :bottomright,
-		xlabel = "Number of observations in dataset (log-scale)", 
-		xguidefontsize = 9,
-		ylabel = "Time (in ms, log-scale)", 
-		yguidefontsize = 9
+	local ax = Makie.Axis(fig[1, 1])
+	
+	ylims!(ax, ylimits)
+	
+	ax.xlabel = "Number of observations in dataset (log-scale)"
+	ax.xlabelsize = 16
+	
+	ax.ylabel = "Time (in ms, log-scale)"
+	ax.ylabelsize = 16
+	
+	ax.xscale = Makie.pseudolog10
+	ax.yscale = Makie.pseudolog10
+	
+	ax.yticks = (
+		[ 10, 100, 1000, 10000, 100_000, 1_000_000, 1e7, 1e8, 1e9 ], 
+		[ "10", "100", "1e3", "1e4", "1e5", "1e6", "1e7", "1e8", "1e9" ]
 	)
 	
-	p = plot!(
-		p, s_range, s_timings, 
-		yscale = :log10, xscale = :log10,
-		markershape = :utriangle, label = "Smoothing ReactiveMP"
+	ax.xticks = (
+		[ 50, 100, 250, 500, 1000, 2000, 5000, 10000 ], 
+		[ "50", "100", "250", "500", "1e3", "2e3", "5e3", "1e4" ]
 	)
 	
-	p = plot!(
-		p, t_range, t_timings, 
-		yscale = :log10, xscale = :log10,
-		markershape = :diamond, label = "HMC Turing"
-	)
+	lines!(ax, s_range, s_timings, linewidth = 3, label = "Smoothing ReactiveMP")
+	scatter!(ax, s_range, s_timings, marker = :utriangle, markersize = 16)
+	# errorbars!(ax, s_range, s_timings, s_stds, whiskerwidth = 12, color = :orangered)
 	
-	@saveplot p "lgssm_benchmark_turing"
+	lines!(ax, t_range, t_timings, linewidth = 3, label = "HMC Turing")
+	scatter!(ax, t_range, t_timings, marker = :utriangle, markersize = 16)
+	# errorbars!(ax, t_range, t_timings, t_stds, whiskerwidth = 12, color = :orangered)
+	
+	axislegend(ax, position = :lt, labelsize = 14)
+	
+	@saveplot fig "lgssm_benchmark_turing"
 end
 
 # ╔═╡ Cell order:
@@ -1006,12 +1246,12 @@ end
 # ╟─2ce93b39-70ea-4b33-b9df-64e6ade6f896
 # ╠═b0831de2-2aeb-432b-8987-872f4c5d74f0
 # ╟─934ad4d3-bb47-4174-b3d1-cbd6f8e5d75e
-# ╟─099aa726-7694-4b38-875d-a015effc9d3a
+# ╟─5becdba8-d38f-4d75-9c24-6790c73ff48b
 # ╟─2530cf00-52c1-4c44-8d62-a3e4f0d411bc
 # ╠═fb94e6e9-10e4-4f9f-95e6-43cdd9184c09
 # ╟─84c171fc-fd79-43f2-942f-7ec6acd63c14
 # ╠═8981b0f8-9ff2-4c90-a958-0fe4da538809
-# ╠═cf1426f1-98d9-402a-80f6-27545fd06d94
+# ╟─cf1426f1-98d9-402a-80f6-27545fd06d94
 # ╟─1c6ee7dc-3ecc-43f6-a467-d21ef9c79b34
 # ╟─9d4eecce-37d5-4177-8c52-1ad0da74e7ce
 # ╠═7671e1cc-4ff6-4c2b-b811-aa389a82c6b2
