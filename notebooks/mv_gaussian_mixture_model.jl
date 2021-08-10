@@ -24,18 +24,14 @@ Pkg.activate("$(@__DIR__)/../") # To disable pluto's built-in pkg manager
 
 # ╔═╡ a5ee57e2-b4c4-4365-ba66-135ce6c7d225
 begin
-
 	using ReactiveMPPaperExperiments
 	using DrWatson, PlutoUI, Images
-    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	using CairoMakie
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random
 	using LinearAlgebra
 	using BenchmarkTools
-
-	if !in(:PlutoRunner, names(Main))
-		using PGFPlotsX
-		pgfplotsx()
-	end
-
+	
+	import ReactiveMP: update!
 end
 
 # ╔═╡ 7b34d8ee-fcbb-4981-9583-14c4ff4fabcc
@@ -138,17 +134,24 @@ begin
 	local sdim    = (n) -> (a) -> map(d -> d[n], a)
 	local limits  = (-1.5cdistance, 1.5cdistance)
 	
-	local p = plot(
-		title = "Synthetic data from Gaussian Mixture Distribution",
-		titlefontsize = 9,
-		xlim = limits, ylim = limits,
+	local fig = Figure(resolution = (350, 350))
+	local ax = Makie.Axis(fig[1, 1])
+	
+	ax.xticks = [ -10, -5, 0, 5, 10 ]
+	ax.yticks = [ -10, -5, 0, 5, 10 ]
+
+	xlims!(ax, limits)
+	ylims!(ax, limits)
+	
+	local palette = fig.scene.palette.color[]
+	
+	scatter!(ax, 
+		y |> sdim(1), y |> sdim(2), 
+		markersize = 6, color = (palette[1], 0.9), 
+		label = "Observations"
 	)
 	
-	p = scatter!(
-		p, y |> sdim(1), y |> sdim(2), ms = 3, alpha = 0.4, label = "Observations"
-	)
-	
-	@saveplot p "gmm_data"
+	@saveplot fig "gmm_data"
 end
 
 # ╔═╡ aa3f6725-7b64-46d6-9f8d-5aa8e0a0745b
@@ -278,33 +281,50 @@ md"""
 
 """
 
-# ╔═╡ 8182deab-8b09-491c-a802-877d2af25afc
+# ╔═╡ c1a1b320-e027-4047-a79f-39466c3dedcf
 begin
-	local sdim    = (n) ->  (a) -> map(d -> d[n], a)
+	local sdim    = (n) -> (a) -> map(d -> d[n], a)
 	local limits  = (-1.5cdistance, 1.5cdistance)
+	local sigmoid = (x) -> 1 / (1 + exp(-x))
 	
-	local p = plot(
-		# title = "Inference results for Gaussian Mixture", titlefontsize = 9,
-		xlim = limits, ylim = limits,
-	)
+	local fig = Figure(resolution = (350, 350))
+	local ax = Makie.Axis(fig[1, 1])
 	
-	p = scatter!(
-		p, y |> sdim(1), y |> sdim(2), ms = 3, alpha = 0.4, label = "Observations"
+	ax.xticks = [ -10, -5, 0, 5, 10 ]
+	ax.yticks = [ -10, -5, 0, 5, 10 ]
+
+	xlims!(ax, limits)
+	ylims!(ax, limits)
+	
+	local palette = fig.scene.palette.color[]
+	
+	scatter!(ax, 
+		y |> sdim(1), y |> sdim(2), 
+		markersize = 6, color = (palette[1], 0.15), 
+		label = "Observations"
 	)
 	
 	local e_means = mean.(means_estimated)
 	local e_precs = mean.(precs_estimated)
 	local crange  = range(-2cdistance, 2cdistance, step = 0.25)
+	local mixing  = mean(mixing_estimated)
 	
-	for (e_m, e_w) in zip(e_means, e_precs)
-	    gaussian = MvNormal(e_m, Matrix(Hermitian(inv(e_w))))
-    	p = contour!(p, 
-			crange, crange, (x, y) -> pdf(gaussian, [ x, y ]), 
-			levels = 3, colorbar = false
-		)
-	end
+	local mixture = Distributions.MixtureModel(
+		map(e -> MvNormal(e[1], Matrix(Hermitian(inv(e[2])))), zip(e_means, e_precs)),
+		mixing
+	)
 	
-	@saveplot p "gmm_inference"
+	local c = Makie.wong_colors()
+	
+	cobj = contour!(ax, 
+		crange, crange, (x, y) -> pdf(mixture, [ x, y ]), 
+		levels = 7, colorbar = true, linewidth = 0.8, overdraw = true,
+		colormap = cgrad([ c[1], c[6], :red3 ])
+	)
+	
+	# Colorbar(fig[1, 2], cobj)
+	
+	@saveplot fig "gmm_inference"
 end
 
 # ╔═╡ b7d3507c-d244-4118-b20e-ddf662ee5df8
@@ -312,21 +332,21 @@ md"""
 As we can see our model correctly predicted the underlying means and precisions for the actual mixture components in our gaussian mixture distribution.
 """
 
-# ╔═╡ 3362a9ce-15e3-403d-8747-3e685150f8e2
+# ╔═╡ 942bf2f6-92cf-4e53-88fb-dc8b735ae5bc
 begin
-	local p = plot(
-		# title = "Free energy for Gaussian Mixture Model Bayesian Inference",
-		titlefontsize = 9
-	)
 	
-	p = plot!(p, 1:length(fe), fe, legend = false)
+	local fig = Figure(resolution = (350, 350))
 	
-	@saveplot p "gmm_fe"
+	local ax = Makie.Axis(fig[1, 1])
+	
+	lines!(ax, 1:length(fe), fe, linewidth = 2)
+	
+	@saveplot fig "gmm_fe"
 end
 
-# ╔═╡ fd5b774a-6475-4346-9fdc-e71f89b4be56
+# ╔═╡ 31834c46-0015-46fa-82b8-4de0b8f69d95
 md"""
-### Benchmark
+# Benchmark
 """
 
 # ╔═╡ 924d5804-b3e0-4d25-b2ce-5ba8a5b56f75
@@ -387,10 +407,10 @@ end;
 # ╠═d033184a-db65-47e7-8596-de3620d8b5bd
 # ╠═33a45c18-7755-42d9-89cc-41964e76531b
 # ╟─ea21fb47-d599-449e-a785-e655cb330836
-# ╠═8182deab-8b09-491c-a802-877d2af25afc
+# ╟─c1a1b320-e027-4047-a79f-39466c3dedcf
 # ╟─b7d3507c-d244-4118-b20e-ddf662ee5df8
-# ╟─3362a9ce-15e3-403d-8747-3e685150f8e2
-# ╟─fd5b774a-6475-4346-9fdc-e71f89b4be56
+# ╟─942bf2f6-92cf-4e53-88fb-dc8b735ae5bc
+# ╟─31834c46-0015-46fa-82b8-4de0b8f69d95
 # ╠═924d5804-b3e0-4d25-b2ce-5ba8a5b56f75
 # ╠═6ec68085-2b43-4eed-95d8-30a2a8b24d48
 # ╠═a639c21c-5f97-4fc8-9fc8-795037079480

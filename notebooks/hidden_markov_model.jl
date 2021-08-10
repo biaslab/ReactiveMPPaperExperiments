@@ -27,14 +27,11 @@ begin
 
 	using ReactiveMPPaperExperiments
 	using DrWatson, PlutoUI, Images
-    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	using CairoMakie
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random
 	using BenchmarkTools
 
-	if !in(:PlutoRunner, names(Main))
-		using PGFPlotsX
-		pgfplotsx()
-	end
-
+	import ReactiveMP: update!
 end
 
 # ╔═╡ 83eb01c5-e383-4c8d-b187-12fc9dc87ecb
@@ -267,30 +264,15 @@ s_est, A_est, B_est, fe = inference(x, n_itr);
 
 # ╔═╡ 5b60460c-5f93-41b5-b44b-820523098385
 begin
-	local p = plot()
 	
-	p = plot!(p, title = "Bethe Free Energy functional", titlefontsize = 10)
-	p = plot!(p, fe, xticks = 1:3:n_itr, label = "\$BFE\$")
-	p = plot!(p, ylabel = "Free energy", yguidefontsize = 8)
-	p = plot!(p, xlabel = "Iteration index", xguidefontsize = 8)
+	local fig = Figure(resolution = (500, 350))
+	local ax  = Makie.Axis(fig[1, 1])
 	
-	if n_itr > 30
-		local range        = 1:n_itr
-		local lens_x_range = [ Int(round(0.75 * n_itr)), n_itr ]
-
-		local diff = 0.5abs(maximum(fe[lens_x_range]) - minimum(fe[lens_x_range]))
-
-		local lens_y_range = [ 
-			minimum(fe[lens_x_range]) - diff, maximum(fe[lens_x_range]) + diff 
-		]
-
-		p = lens!(
-			p, lens_x_range, lens_y_range, 
-			inset = (1, bbox(0.5, 0.4, 0.4, 0.2))
-		)
-	end
+	lines!(ax, 1:length(fe), fe, label = "Bethe Free Energy", linewidth = 2)
 	
-	@saveplot p "hmm_fe"
+	axislegend(ax, labelsize = 16, position = :rt)
+	
+	@saveplot fig "hmm_fe"
 end
 
 # ╔═╡ eeef9d32-805f-4958-aabb-b552430f2d4d
@@ -316,19 +298,30 @@ md"""
 
 # ╔═╡ 6fe2241b-80d5-45b8-84c9-3d834f2a4121
 begin
-	local p = plot()
+	local fig = Figure(resolution = (500, 350))
+	local ax  = Makie.Axis(fig[1, 1])
 	
 	local range       = 1:n
 	local s_states    = argmax.(s)
 	local s_estimated = mean.(last(s_est))
 	local s_err       = std.(last(s_est))
+	local c           = Makie.wong_colors()
 	
-	p = scatter!(p, range, s_states, ms = 3, label = "Real states", color = :red3, alpha = 0.75)
-	p = plot!(p, range, s_estimated, ribbon = s_err, fillalpha = 0.2, label = "Estimated", color = :orange)
-	p = plot!(p, legend = :bottomright)
+	lines!(ax, range, s_estimated, color = c[1], label = "estimated")
+	band!(ax, range, 
+		s_estimated .- s_err, s_estimated .+ s_err,
+		color = (c[1], 0.45)
+	)
+	scatter!(ax, range, s_states, color = c[6], markersize = 5, label = "real")
+	
+	# p = scatter!(p, range, s_states, ms = 3, label = "Real states", color = :red3, alpha = 0.75)
+	# p = plot!(p, range, s_estimated, ribbon = s_err, fillalpha = 0.2, label = "Estimated", color = :orange)
+	# p = plot!(p, legend = :bottomright)
 	# p = plot!(xlabel = "Time-step index", xguidefontsize = 8)
 	
-	@saveplot p "hmm_inference"
+	axislegend(ax, labelsize = 16, position = :rb)
+	
+	@saveplot fig "hmm_inference"
 end
 
 # ╔═╡ c908eba5-8e36-416b-a2d7-3d994c454b85
@@ -337,55 +330,55 @@ We may also interested in our state transition matrices estimations. We may plot
 """
 
 # ╔═╡ 74924c8e-7141-4e0d-aaa6-78732726498e
-begin
-	local rotate90 = (m) -> begin
-		hcat(reverse(collect(eachcol(transpose(m))))...)
-	end
+# begin
+# 	local rotate90 = (m) -> begin
+# 		hcat(reverse(collect(eachcol(transpose(m))))...)
+# 	end
 	
-	local rA     = rotate90(A)
-	local rA_est = rotate90(mean(last(A_est)))
-	local rB     = rotate90(B)
-	local rB_est = rotate90(mean(last(B_est)))
-	local p1 = plot()
-	local p2 = plot()
-	local p3 = plot()
-	local p4 = plot()
+# 	local rA     = rotate90(A)
+# 	local rA_est = rotate90(mean(last(A_est)))
+# 	local rB     = rotate90(B)
+# 	local rB_est = rotate90(mean(last(B_est)))
+# 	local p1 = plot()
+# 	local p2 = plot()
+# 	local p3 = plot()
+# 	local p4 = plot()
 	
-	color = :blues
+# 	color = :blues
 
-	p1 = heatmap!(
-		p1, [ "1", "2", "3" ], [ "3", "2", "1" ], rA_est, 
-		title = "Estimated matrix coefficients", titlefont = 8,
-		clim = (0.0, 1.0), color=color
-	)
-	p2 = heatmap!(
-		p2, [ "1", "2", "3" ], [ "3", "2", "1" ], 
-		title = "Squared error difference", titlefont = 8,
-		abs2.(rA .- rA_est), 
-		clim = (0.0, 1.0), color=color
-	)
+# 	p1 = heatmap!(
+# 		p1, [ "1", "2", "3" ], [ "3", "2", "1" ], rA_est, 
+# 		title = "Estimated matrix coefficients", titlefont = 8,
+# 		clim = (0.0, 1.0), color=color
+# 	)
+# 	p2 = heatmap!(
+# 		p2, [ "1", "2", "3" ], [ "3", "2", "1" ], 
+# 		title = "Squared error difference", titlefont = 8,
+# 		abs2.(rA .- rA_est), 
+# 		clim = (0.0, 1.0), color=color
+# 	)
 	
-	p3 = heatmap!(
-		p3, [ "1", "2", "3" ], [ "3", "2", "1" ], rB_est, 
-		title = "Estimated matrix coefficients", titlefont = 8,
-		clim = (0.0, 1.0), color=color
-	)
-	p4 = heatmap!(
-		p4, [ "1", "2", "3" ], [ "3", "2", "1" ], 
-		title = "Squared error difference", titlefont = 8,
-		abs2.(rB .- rB_est),
-		clim = (0.0, 1.0), color=color
-	)
+# 	p3 = heatmap!(
+# 		p3, [ "1", "2", "3" ], [ "3", "2", "1" ], rB_est, 
+# 		title = "Estimated matrix coefficients", titlefont = 8,
+# 		clim = (0.0, 1.0), color=color
+# 	)
+# 	p4 = heatmap!(
+# 		p4, [ "1", "2", "3" ], [ "3", "2", "1" ], 
+# 		title = "Squared error difference", titlefont = 8,
+# 		abs2.(rB .- rB_est),
+# 		clim = (0.0, 1.0), color=color
+# 	)
 	
-	local p = plot(
-		p1, p2, p3, p4, size = (500, 400), layout = @layout([ a b; c d ])
-	)
+# 	local p = plot(
+# 		p1, p2, p3, p4, size = (500, 400), layout = @layout([ a b; c d ])
+# 	)
 	
-	@saveplot plot(p1, p2) "hmm_A"
-	@saveplot plot(p3, p4) "hmm_B"
+# 	@saveplot plot(p1, p2) "hmm_A"
+# 	@saveplot plot(p3, p4) "hmm_B"
 	
-	p
-end
+# 	p
+# end
 
 # ╔═╡ ff8aa1bb-300d-471f-b260-25b477366e22
 md"""
@@ -445,13 +438,24 @@ target_n_itrs = [ 5, 15, 25 ]
 
 # ╔═╡ 6c3b504a-b8d6-41e2-8178-fc819a465f2b
 begin
-	local p = plot(
-		title = "Hidden Markov Model Benchmark (number of observations)",
-		titlefontsize = 10, legend = :bottomright,
-		xlabel = "Number of observations in dataset (log-scale)", 
-		xguidefontsize = 9,
-		ylabel = "Time (in ms, log-scale)", 
-		yguidefontsize = 9
+	
+	local fig = Figure(resolution = (500, 350))
+	
+	local ax = Makie.Axis(fig[1, 1])
+	
+	ax.xlabel = "Number of observations in dataset log-scale()"
+	ax.ylabel = "Time (in ms, log-scale)"
+	ax.xscale = Makie.pseudolog10
+	ax.yscale = Makie.pseudolog10
+	
+	ax.xticks = (
+		[ 50, 100, 200, 500, 1000, 2000, 5000, 10_000 ], 
+		[ "50", "100", "200", "500", "1e3", "2e3", "5e3", "1e4" ]
+	)
+	
+	ax.yticks = (
+		[ 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5_000, 10_000 ], 
+		[ "5", "10", "20", "50", "100", "200", "500", "1e3", "2e3", "5e3", "1e4" ]
 	)
 	
 	local mshapes = [ :utriangle, :diamond, :pentagon ]
@@ -464,17 +468,14 @@ begin
 		local range      = map(f -> f["n"], filtered)
 		local benchmarks = map(f -> f["benchmark"], filtered)
 		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
-
-
-
-		p = plot!(
-			p, range, timings,
-			yscale = :log10, xscale = :log10,
-			markershape = mshape, label = "VMP n_itr = $(target_n_itr)"
-		)
+		
+		lines!(ax, range, timings, label = "VMP n_itr = $(target_n_itr)")
+		scatter!(ax, range, timings, marker = mshape, markersize = 16)
 	end
 	
-	@saveplot p "hmm_benchmark_observations"
+	axislegend(ax, labelsize = 16, position = :lt)
+	
+	@saveplot fig "hmm_benchmark_observations"
 end
 
 # ╔═╡ f2b495ab-f3fc-4e09-b0d9-33311c2d08f8
@@ -482,14 +483,27 @@ target_ns = [ 50, 500, 5000 ]
 
 # ╔═╡ 2796dc7a-cd99-4f8e-89eb-89ea4e302813
 begin
-	local p = plot(
-		title = "Hidden Markov Model Benchmark (iterations)",
-		titlefontsize = 10, legend = :bottomright,
-		xlabel = "Number of performed VMP iterations (log-scale)", 
-		xguidefontsize = 9,
-		ylabel = "Time (in ms, log-scale)", 
-		yguidefontsize = 9
+	
+	local fig = Figure(resolution = (500, 350))
+	
+	local ax = Makie.Axis(fig[1, 1])
+	
+	ax.xlabel = "Number of performed VMP iterations (log-scale)"
+	ax.ylabel = "Time (in ms, log-scale)"
+	ax.xscale = Makie.pseudolog10
+	ax.yscale = Makie.pseudolog10
+	
+	ax.xticks = (
+		[ 5, 10, 15, 20, 25 ],
+		string.([ 5, 10, 15, 20, 25 ])
 	)
+	
+	ax.yticks = (
+		[ 5, 20, 100, 300, 1000, 3_000, 10_000, 3e4, 1e5 ], 
+		[ "5", "20", "100", "300", "1e3", "3e3", "1e4", "3e4", "1e5" ]
+	)
+	
+	ylims!(ax, (2, 3e5 ))
 	
 	local mshapes = [ :utriangle, :diamond, :pentagon ]
 	
@@ -502,16 +516,14 @@ begin
 		local benchmarks = map(f -> f["benchmark"], filtered)
 		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
 		local ylim       = (1e0, 10maximum(timings))
-
-
-		p = plot!(
-			p, range, timings,
-			yscale = :log10, xscale = :log10,
-			markershape = mshape, label = "n_observations = $(target_n)", ylim = ylim
-		)
+		
+		lines!(ax, range, timings, label = "n_observations = $(target_n)")
+		scatter!(ax, range, timings, marker = mshape, markersize = 16)
 	end
 	
-	@saveplot p "hmm_benchmark_iterations"
+	axislegend(ax, labelsize = 16, position = :lt)
+	
+	@saveplot fig "hmm_benchmark_iterations"
 end
 
 # ╔═╡ Cell order:
@@ -544,7 +556,7 @@ end
 # ╟─64a3414c-5b95-46a3-94d1-9f2d7f24284d
 # ╟─6fe2241b-80d5-45b8-84c9-3d834f2a4121
 # ╟─c908eba5-8e36-416b-a2d7-3d994c454b85
-# ╟─74924c8e-7141-4e0d-aaa6-78732726498e
+# ╠═74924c8e-7141-4e0d-aaa6-78732726498e
 # ╟─ff8aa1bb-300d-471f-b260-25b477366e22
 # ╟─99869875-9699-4c3b-8ea1-8a4905ef260d
 # ╠═30eb1c10-cd89-4304-abbe-08934a6dcdae

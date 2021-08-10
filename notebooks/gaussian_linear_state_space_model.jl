@@ -200,6 +200,7 @@ begin
 	
 	local ylimit = (-15, 20)	
 	local range = 1:n_smoothing
+	local c = Makie.wong_colors()
 	
 	local fig = Figure(resolution = (550, 350))
 	local ax  = Makie.Axis(fig[1, 1])
@@ -306,6 +307,7 @@ begin
 	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
 	local ylimit = (-15, 20)
+	local c = Makie.wong_colors() 
 	
 	local x_inferred_means = mean.(x_smoothing_estimated)
 	local x_inferred_stds  = diag.(std.(x_smoothing_estimated))
@@ -339,13 +341,13 @@ begin
 	# Estimated dim1
 	
 	lines!(ax,
-		range, x_inferred_means |> edim(1), color = :teal, label = "estimated[:, 1]"
+		range, x_inferred_means |> edim(1), color = c[3], label = "estimated[:, 1]"
 	)
 	band!(ax,
 		range, 
 		(x_inferred_means |> edim(1)) .+ (x_inferred_stds |> edim(1)),
 		(x_inferred_means |> edim(1)) .- (x_inferred_stds |> edim(1)),
-		color = (:teal, 0.5)
+		color = (c[3], 0.65)
 	)
 	
 	
@@ -363,13 +365,13 @@ begin
 	# Estimated dim2
 	
 	lines!(ax,
-		range, x_inferred_means |> edim(2), color = :blue, label = "estimated[:, 2]"
+		range, x_inferred_means |> edim(2), color = c[1], label = "estimated[:, 2]"
 	)
 	band!(ax,
 		range, 
 		(x_inferred_means |> edim(2)) .+ (x_inferred_stds |> edim(2)),
 		(x_inferred_means |> edim(2)) .- (x_inferred_stds |> edim(2)),
-		color = (:blue, 0.3)
+		color = (c[1], 0.65)
 	)
 	
 	axislegend(ax, position = :lt)
@@ -579,6 +581,7 @@ begin
 	local x_inferred_means = mean.(x_filtering_estimated)
 	local x_inferred_stds  = diag.(std.(x_filtering_estimated))
 	local range = 1:n_filtering
+	local c = Makie.wong_colors()
 	
 	local fig = Figure(resolution = (550, 350))
 	local ax  = Makie.Axis(fig[1, 1])
@@ -608,13 +611,13 @@ begin
 	# Estimated dim1
 	
 	lines!(ax,
-		range, x_inferred_means |> edim(1), color = :teal, label = "estimated[:, 1]"
+		range, x_inferred_means |> edim(1), color = c[3], label = "estimated[:, 1]"
 	)
 	band!(ax,
 		range, 
 		(x_inferred_means |> edim(1)) .+ (x_inferred_stds |> edim(1)),
 		(x_inferred_means |> edim(1)) .- (x_inferred_stds |> edim(1)),
-		color = (:teal, 0.5)
+		color = (c[3], 0.65)
 	)
 	
 	
@@ -632,13 +635,13 @@ begin
 	# Estimated dim2
 	
 	lines!(ax,
-		range, x_inferred_means |> edim(2), color = :blue, label = "estimated[:, 2]"
+		range, x_inferred_means |> edim(2), color = c[1], label = "estimated[:, 2]"
 	)
 	band!(ax,
 		range, 
 		(x_inferred_means |> edim(2)) .+ (x_inferred_stds |> edim(2)),
 		(x_inferred_means |> edim(2)) .- (x_inferred_stds |> edim(2)),
-		color = (:blue, 0.3)
+		color = (c[1], 0.65)
 	)
 	
 	axislegend(ax, position = :lt, labelsize = 16)
@@ -817,7 +820,7 @@ begin
 	local f_timings    = map(t -> t.time, minimum.(f_benchmarks)) ./ 1_000_000
 	local f_memories   = map(t -> t.memory, minimum.(f_benchmarks)) ./ 1024
 	
-	fig = Figure(resolution = (500, 350))
+	fig = Figure(resolution = (500, 300))
 	
 	ax = Makie.Axis(fig[1, 1])
 	
@@ -928,44 +931,6 @@ x_turing_estimated = inference_turing(
 );
 
 # ╔═╡ 43649fce-8ee4-42a9-819b-ba17fa9de998
-# begin 
-# 	local reshape_data = (data) -> transpose(reduce(hcat, data))
-# 	local reshape_turing_data = (data) -> transpose(
-# 		reshape(data, (2, Int(length(data) / 2)))
-# 	)
-	
-# 	local ylimit = (-20, 20)
-	
-# 	local x_label = [ "x[:, 1]" "x[:, 2]" ]
-# 	local y_label = [ "observations[:, 1]" "observations[:, 2]" ]
-# 	local i_label = [ "inferred[:, 1]" "inferred[:, 2]" ]
-	
-# 	local x_reshaped = x_turing |> reshape_data
-# 	local y_reshaped = y_turing |> reshape_data
-	
-# 	local samples = get(x_turing_estimated, :x)
-# 	local x_inferred_means = reshape_turing_data(
-# 		[ mean(samples.x[i].data) for i in 1:2n_turing ]
-# 	)
-# 	local x_inferred_stds = reshape_turing_data(
-# 		[std(samples.x[i].data) for i in 1:2n_turing]
-# 	)
-	
-# 	local p = plot(
-# 		title = "Turing HMC inference results", titlefontsize = 10,
-# 		xlabel = "Time step k", xguidefontsize = 8,
-# 		ylabel = "Latent states values", yguidefonrsize = 8
-# 	)
-# 	local range = 1:n_turing
-	
-# 	p = plot!(p, range, x_reshaped, label = x_label)
-# 	p = plot!(p, range, x_inferred_means, ribbon = x_inferred_stds, label = i_label)
-# 	p = scatter!(p, range, y_reshaped, ms = 3, alpha = 0.5, label = y_label)
-# 	p = plot!(p, legend = :bottomleft, ylimit = ylimit)
-	
-# 	@saveplot p "lgssm_turing_inference"
-# end
-
 begin
 	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	local reshape_data = (data) -> transpose(reduce(hcat, data))
@@ -974,6 +939,7 @@ begin
 	)
 	
 	local ylimit = (-15, 20)
+	local c = Makie.wong_colors()
 	
 	local samples = get(x_turing_estimated, :x)
 	local x_inferred_means = reshape_turing_data(
@@ -982,8 +948,6 @@ begin
 	local x_inferred_stds = reshape_turing_data(
 		[std(samples.x[i].data) for i in 1:2n_turing]
 	) |> collect |> eachrow |> collect
-	
-	@show x_inferred_means
 	
 	local range = 1:n_turing
 	
@@ -1015,13 +979,13 @@ begin
 	# Estimated dim1
 	
 	lines!(ax,
-		range, x_inferred_means |> edim(1), color = :teal, label = "estimated[:, 1]"
+		range, x_inferred_means |> edim(1), color = c[3], label = "estimated[:, 1]"
 	)
 	band!(ax,
 		range, 
 		(x_inferred_means |> edim(1)) .+ (x_inferred_stds |> edim(1)),
 		(x_inferred_means |> edim(1)) .- (x_inferred_stds |> edim(1)),
-		color = (:teal, 0.5)
+		color = (c[3], 0.65)
 	)
 	
 	
@@ -1039,13 +1003,13 @@ begin
 	# Estimated dim2
 	
 	lines!(ax,
-		range, x_inferred_means |> edim(2), color = :blue, label = "estimated[:, 2]"
+		range, x_inferred_means |> edim(2), color = c[1], label = "estimated[:, 2]"
 	)
 	band!(ax,
 		range, 
 		(x_inferred_means |> edim(2)) .+ (x_inferred_stds |> edim(2)),
 		(x_inferred_means |> edim(2)) .- (x_inferred_stds |> edim(2)),
-		color = (:blue, 0.3)
+		color = (c[1], 0.65)
 	)
 	
 	axislegend(ax, position = :lt, labelsize = 16)
@@ -1246,7 +1210,7 @@ end
 # ╟─2ce93b39-70ea-4b33-b9df-64e6ade6f896
 # ╠═b0831de2-2aeb-432b-8987-872f4c5d74f0
 # ╟─934ad4d3-bb47-4174-b3d1-cbd6f8e5d75e
-# ╟─5becdba8-d38f-4d75-9c24-6790c73ff48b
+# ╠═5becdba8-d38f-4d75-9c24-6790c73ff48b
 # ╟─2530cf00-52c1-4c44-8d62-a3e4f0d411bc
 # ╠═fb94e6e9-10e4-4f9f-95e6-43cdd9184c09
 # ╟─84c171fc-fd79-43f2-942f-7ec6acd63c14

@@ -27,14 +27,11 @@ begin
 	
 	using ReactiveMPPaperExperiments
 	using DrWatson, PlutoUI, Images
-    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
+	using CairoMakie
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random
 	using BenchmarkTools
 	
-	if !in(:PlutoRunner, names(Main))
-		using PGFPlotsX
-		pgfplotsx()
-	end
-	
+	import ReactiveMP: update!
 end
 
 # ╔═╡ 8b370073-4495-4181-9edc-379783091753
@@ -242,28 +239,67 @@ md"""
 
 # ╔═╡ 7b68e3c5-2dc6-4310-b437-8ab12f924dd6
 begin 
-	local p1 = plot()
-	local p2 = plot()
+	local c = Makie.wong_colors()
+	
+	local f1    = Figure(resolution = (350, 350))
+	local f2    = Figure(resolution = (350, 350))
+	local f3    = Figure(resolution = (350, 350))
 	local shift = nitr
+	local range = 1:shift:length(zm)
+	local grid  = 1:n
 
-	p1 = plot!(p1, z_data, palette = [ :red3, :green ])
-	p1 = plot!(p1, mean.(zm[1:shift:end]), ribbon = std.(zm), legend = false)
-
-
-	p2 = plot!(p2, s_data)
-	p2 = plot!(p2, mean.(sm[1:shift:end]), ribbon = std.(sm), legend = false)
-	p2 = scatter!(y_data, ms = 1)
-
+	local ax1 = Makie.Axis(f1[1, 1])
+	local ax2 = Makie.Axis(f2[1, 1])
+	local ax3 = Makie.Axis(f3[1, 1])
 	
-	local rfe = sum(reshape(fe, (nitr, n)), dims = 2)
+	function plot_z(fig)
+		
+		lines!(fig, grid, z_data, color = :red3, label = "real")
+		lines!(fig, grid, mean.(zm[range]), color = c[3], label = "estimated")
+		band!(fig, grid, 
+			mean.(zm[1:shift:end]) .- std.(zm[1:shift:end]),
+			mean.(zm[1:shift:end]) .+ std.(zm[1:shift:end]),
+			color = (c[3], 0.65)
+		)
+		
+		axislegend(fig, labelsize = 16, position = :rt)
+	end
 	
-	p3 = plot(rfe, legend = false)
+	function plot_s(fig)
+		
+		lines!(fig, grid, s_data, color = :purple, label = "real")
+		lines!(fig, grid, mean.(sm[range]), color = c[1], label = "estimated")
+		band!(fig, grid, 
+			mean.(sm[1:shift:end]) .- std.(sm[1:shift:end]),
+			mean.(sm[1:shift:end]) .+ std.(sm[1:shift:end]),
+			color = (c[1], 0.65)
+		)
+		
+		axislegend(fig, labelsize = 16, position = :rb)
+	end
 	
-	@saveplot p1 "hgf_inference_z"
-	@saveplot p2 "hgf_inference_s"
-	@saveplot p3 "hgf_inference_fe"
+	local rfe = vec(sum(reshape(fe, (nitr, n)), dims = 2))
 	
-	plot(p1, p2, p3, layout = @layout([ a b; c ]))
+	function plot_fe(fig)
+		lines!(fig, 1:length(rfe), rfe, linewidth = 2, label = "Bethe Free Energy")
+		axislegend(fig, labelsize = 16)
+	end
+	
+	plot_z(ax1)
+	plot_s(ax2)
+	plot_fe(ax3)
+	
+	@saveplot f1 "hgf_inference_z"
+	@saveplot f2 "hgf_inference_s"
+	@saveplot f3 "hgf_inference_fe"
+	
+	local af = Figure(resolution = (350 * 3, 350))
+	
+	plot_z(Makie.Axis(af[1, 1]))
+	plot_s(Makie.Axis(af[1, 2]))
+	plot_fe(Makie.Axis(af[1, 3]))
+	
+	af
 end
 
 # ╔═╡ b9bd5a69-16fb-4b6b-84c7-80a514c91ccf
@@ -315,13 +351,23 @@ target_n_itrs = [ 5, 10, 20 ]
 # ╔═╡ bb85ebc5-5f25-4a9d-8f09-bd41061ccc70
 begin
 	
-	local p = plot(
-		title = "Hierarchical Gaussian Filter Benchmark (number of observations)",
-		titlefontsize = 10, legend = :bottomright,
-		xlabel = "Number of observations in dataset (log-scale)", 
-		xguidefontsize = 9,
-		ylabel = "Time (in ms, log-scale)", 
-		yguidefontsize = 9
+	local fig = Figure(resolution = (500, 350))
+	
+	local ax = Makie.Axis(fig[1, 1])
+	
+	ax.xlabel = "Number of observations in dataset log-scale()"
+	ax.ylabel = "Time (in ms, log-scale)"
+	ax.xscale = Makie.pseudolog10
+	ax.yscale = Makie.pseudolog10
+	
+	ax.xticks = (
+		[ 50, 100, 200, 500, 1000, 2000, 5000, 10_000 ], 
+		[ "50", "100", "200", "500", "1e3", "2e3", "5e3", "1e4" ]
+	)
+	
+	ax.yticks = (
+		[ 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5_000, 10_000 ], 
+		[ "5", "10", "20", "50", "100", "200", "500", "1e3", "2e3", "5e3", "1e4" ]
 	)
 	
 	local mshapes = [ :utriangle, :diamond, :pentagon ]
@@ -334,15 +380,14 @@ begin
 		local range      = map(f -> f["n"], filtered)
 		local benchmarks = map(f -> f["benchmark"], filtered)
 		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
-
-		p = plot!(
-			p, range, timings,
-			yscale = :log10, xscale = :log10,
-			markershape = mshape, label = "VMP n_itr = $(target_n_itr)"
-		)
+		
+		lines!(ax, range, timings, label = "VMP n_itr = $(target_n_itr)")
+		scatter!(ax, range, timings, marker = mshape, markersize = 16)
 	end
 	
-	@saveplot p "hgf_benchmark_observations"
+	axislegend(ax, labelsize = 16, position = :lt)
+	
+	@saveplot fig "hgf_benchmark_observations"
 end
 
 # ╔═╡ 1cc14e44-8744-41b0-860c-770ae3b3e07c
@@ -350,16 +395,29 @@ target_ns = [ 500, 2500, 10000 ]
 
 # ╔═╡ 16e975fc-2692-4625-bb4a-f6693205df3a
 begin
-	local p = plot(
-		title = "Hierarchical Gaussian Filter Benchmark (iterations)",
-		titlefontsize = 10, legend = :bottomright,
-		xlabel = "Number of performed VMP iterations (log-scale)", 
-		xguidefontsize = 9,
-		ylabel = "Time (in ms, log-scale)", 
-		yguidefontsize = 9
+	
+	local fig = Figure(resolution = (500, 350))
+	
+	local ax = Makie.Axis(fig[1, 1])
+	
+	ax.xlabel = "Number of performed VMP iterations (log-scale)"
+	ax.ylabel = "Time (in ms, log-scale)"
+	ax.xscale = Makie.pseudolog10
+	ax.yscale = Makie.pseudolog10
+	
+	ax.xticks = (
+		[ 5, 10, 15, 20 ],
+		string.([ 5, 10, 15, 20 ])
 	)
 	
-	local mshapes = [ :utriangle, :diamond, :pentagon, :dtriangle ]
+	ax.yticks = (
+		[ 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5_000, 10_000 ], 
+		[ "5", "10", "20", "50", "100", "200", "500", "1e3", "2e3", "5e3", "1e4" ]
+	)
+	
+	ylims!(ax, (25, 8e4 ))
+	
+	local mshapes = [ :utriangle, :diamond, :pentagon ]
 	
 	for (mshape, target_n) in zip(mshapes, target_ns)
 		local filtered = filter(hgf_benchmarks) do b
@@ -370,16 +428,14 @@ begin
 		local benchmarks = map(f -> f["benchmark"], filtered)
 		local timings    = map(t -> t.time, minimum.(benchmarks)) ./ 1_000_000
 		local ylim       = (1e0, 10maximum(timings))
-
-
-		p = plot!(
-			p, range, timings,
-			yscale = :log10, xscale = :log10, xticks = (range, string.(range)),
-			markershape = mshape, label = "n_observations = $(target_n)", ylim = ylim
-		)
+		
+		lines!(ax, range, timings, label = "n_observations = $(target_n)")
+		scatter!(ax, range, timings, marker = mshape, markersize = 16)
 	end
 	
-	@saveplot p "hgf_benchmark_iterations"
+	axislegend(ax, labelsize = 16, position = :lt)
+	
+	@saveplot fig "hgf_benchmark_iterations"
 end
 
 # ╔═╡ Cell order:
@@ -395,7 +451,7 @@ end
 # ╠═363a8fcd-ff86-4d8e-bafc-92e8e6324ffe
 # ╠═0b0f6b07-7a88-413b-b3ad-a3de3ddc2e7e
 # ╟─1594d934-9c3c-477b-9931-bc265af18046
-# ╠═7b68e3c5-2dc6-4310-b437-8ab12f924dd6
+# ╟─7b68e3c5-2dc6-4310-b437-8ab12f924dd6
 # ╟─b9bd5a69-16fb-4b6b-84c7-80a514c91ccf
 # ╠═cb60be26-87f5-4cf7-b3b4-d16197a7a065
 # ╠═597b54c3-d8ce-4aed-a961-9a0fc9640a22
