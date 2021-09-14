@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.16.0
 
 using Markdown
 using InteractiveUtils
@@ -24,16 +24,15 @@ Pkg.activate("$(@__DIR__)/../") # To disable pluto's built-in pkg manager
 
 # ╔═╡ 2a441550-27d1-4d02-870d-02cc9fdbba40
 begin
-
     using ReactiveMPPaperExperiments
 	using DrWatson, PlutoUI, Images
-    using ReactiveMP, Rocket, GraphPPL, Distributions, Random, Plots
-
-	if !in(:PlutoRunner, names(Main))
-		using PGFPlotsX
-		pgfplotsx()
-	end
-
+    using ReactiveMP, Rocket, GraphPPL, Distributions, Random
+	
+	import ReactiveMP: update!
+	
+	using CairoMakie
+	
+	import CairoMakie: Axis
 end
 
 # ╔═╡ f0d8d8a8-a881-4d83-b662-eec38dd732fd
@@ -97,6 +96,12 @@ p_slider = @bind p ThrottledSlider(0.0:0.01:1.0, default = 0.5)
 # Seed value used for data generation
 seed_slider = @bind seed ThrottledSlider(1:1000, default = 42)
 
+# ╔═╡ 985217f2-d4fb-4138-9d99-6159d7681f71
+prior_a_slider = @bind prior_a ThrottledSlider(1:0.1:10, default = 4.0)
+
+# ╔═╡ 388c94d8-0828-4001-9989-d5267e7950fb
+prior_b_slider = @bind prior_b ThrottledSlider(1:0.1:10, default = 8.0)
+
 # ╔═╡ 16c2aee7-61ba-4440-9326-a1483e8872d0
 begin 
 	rng = MersenneTwister(seed)
@@ -118,19 +123,29 @@ md"""
 """
 
 # ╔═╡ 6e43fdb2-7b39-4f04-b526-e20976e9e3c9
-function inference(data)
-    model, (y, θ) = coin_model(n, 1.0, 1.0)
+function inference(data, prior_a, prior_b)
+	
+	# First we create a model and obtain references for variables of interest
+    model, (y, θ) = coin_model(n, prior_a, prior_b)
     
+	# θs is a reference for future posterior
     θs     = nothing
+	
+	# We subscribe on posterior marginal with 
+	# `getmarginal` and `subscribe!` function
+	# We update `θs` as sons as new posteior is available
     θ_sub  = subscribe!(getmarginal(θ), (θ) -> θs = θ)
     
+	# `update!` function passes new data to our observations
     update!(y, data)
     
+	# At this step we assume that we received a new update for posterior
+	# and θs has been updated
     return θs
 end
 
 # ╔═╡ 1ab48849-070a-4e93-b6f8-88ebd012caf1
-estimated_θ = inference(dataset)
+estimated_θ = inference(dataset, prior_a, prior_b)
 
 # ╔═╡ 894a2168-ea45-4021-a08a-121fe590fd86
 md"""
@@ -140,6 +155,8 @@ md"""
 | ----- | ---- |
 | n     | $(n_slider)    |
 | p     | $(p_slider)    |
+| prior a     | $(prior_a_slider)    |
+| prior b     | $(prior_b_slider)    |
 | seed     | $(seed_slider)    |
 """
 
@@ -157,6 +174,33 @@ Our `inference` function simply returns a posterior marginal distribution over �
 As we can see θ parameter has been estimated correctly with a very high precision.
 """
 
+# ╔═╡ 5f8eccb9-1d84-4c31-a651-8a41fcfdf707
+let
+	f = Figure(resolution = (1000, 400))
+	
+	ax = Axis(f[1, 1])
+	
+	prior     = Beta(prior_a, prior_b)
+	posterior = estimated_θ
+	
+	range    = 0.0:0.0025:1.0
+	zeros    = map(_ -> 0.0, range)
+	pdensity = map((x) -> pdf(prior, x), range)
+	edensity = map((x) -> pdf(posterior, x), range)
+	
+	lines!(ax, range, pdensity, label = "Prior")
+	band!(ax, range, zeros, pdensity, color = (:blue, 0.25))
+	
+	vlines!(ax, [ p ], color = :teal, label = "Real")
+	
+	lines!(ax, range, edensity, label = "Posterior")
+	band!(ax, range, zeros, edensity, color = (:orange, 0.25))
+	
+	axislegend(ax)
+	
+	f
+end
+
 # ╔═╡ Cell order:
 # ╠═dafb5428-9d09-11eb-1d29-b9cd53c89545
 # ╠═2b6b67e0-bdd3-44d9-abc5-13482f0a1056
@@ -169,6 +213,8 @@ As we can see θ parameter has been estimated correctly with a very high precisi
 # ╠═54a367e2-2a16-46a8-b3de-50c9e4f1827f
 # ╠═baafcf7c-52b4-458e-8de7-24cf26986fae
 # ╠═6d5d5123-4465-49de-aa9e-0828055da982
+# ╠═985217f2-d4fb-4138-9d99-6159d7681f71
+# ╠═388c94d8-0828-4001-9989-d5267e7950fb
 # ╠═16c2aee7-61ba-4440-9326-a1483e8872d0
 # ╟─66612a6f-111d-496c-83ea-e6f0de30757f
 # ╟─2797b5df-a3da-426d-bb53-d810721a817f
@@ -176,3 +222,4 @@ As we can see θ parameter has been estimated correctly with a very high precisi
 # ╠═1ab48849-070a-4e93-b6f8-88ebd012caf1
 # ╟─894a2168-ea45-4021-a08a-121fe590fd86
 # ╟─081d2f7e-ac43-413e-9f65-932b3e959f11
+# ╟─5f8eccb9-1d84-4c31-a651-8a41fcfdf707

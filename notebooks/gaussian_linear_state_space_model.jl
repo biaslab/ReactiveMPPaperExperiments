@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.16.0
 
 using Markdown
 using InteractiveUtils
@@ -76,7 +76,7 @@ function generate_data(; n, A, B, P, Q, seed)
 	# We create a local RNG to make our results reproducable
     rng = MersenneTwister(seed)
 
-    x_prev = zeros(2)
+    x_prev = zeros(first(size(A)))
 
     x = Vector{Vector{Float64}}(undef, n)
     y = Vector{Vector{Float64}}(undef, n)
@@ -111,9 +111,13 @@ md"""
 	cB = constvar(B)
 	cP = constvar(P)
 	cQ = constvar(Q)
+	
+	d = first(size(A))
+	pm = zeros(d)
+	pc = Matrix(Diagonal(100.0 * ones(d)))
     
 	# Set a prior distribution for x[1]
-    x[1] ~ MvGaussianMeanCovariance([ 0.0, 0.0 ], [ 100.0 0.0; 0.0 100.0 ]) 
+    x[1] ~ MvGaussianMeanCovariance(pm, pc) 
     y[1] ~ MvGaussianMeanCovariance(cB * x[1], cQ)
     
     for t in 2:n
@@ -195,7 +199,7 @@ You may try to change data generation process parameters to immediatelly see how
 """
 
 # ╔═╡ 5becdba8-d38f-4d75-9c24-6790c73ff48b
-begin 
+let 
 	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
 	local ylimit = (-15, 20)	
@@ -303,7 +307,7 @@ x_smoothing_estimated, bfe_smoothing = inference_full_graph(
 );
 
 # ╔═╡ cf1426f1-98d9-402a-80f6-27545fd06d94
-begin
+let
 	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
 	local ylimit = (-15, 20)
@@ -442,9 +446,13 @@ function inference_single_time_segment(observations, A, B, P, Q)
     xsubscription = subscribe!(getmarginal(x_t), xbuffer)
 	fsubscription = subscribe!(score(Float64, BetheFreeEnergy(), model), bfe)
     
+	d = first(size(A))
+	pm = zeros(d)
+	pc = Matrix(Diagonal(100.0 * ones(d)))
+	
 	# Priors for the very first observation
-    update!(x_min_t_mean, [ 0.0, 0.0 ])
-    update!(x_min_t_cov, [ 100.0 0.0; 0.0 100.0 ])
+    update!(x_min_t_mean, pm)
+    update!(x_min_t_cov, pc)
     
     for observation in observations
         update!(y_t, observation)
@@ -507,7 +515,7 @@ x_filtering, y_filtering = generate_data(
 )
 
 # ╔═╡ b006a807-016d-41aa-91ec-a02a4c270990
-begin 
+let 
 	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
 	local ylimit = (-15, 20)	
@@ -573,7 +581,7 @@ x_filtering_estimated, bfe_filtering = inference_single_time_segment(
 );
 
 # ╔═╡ 3beedf02-e870-4da9-89f4-a2667e5bee18
-begin
+let
 	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	
 	local ylimit = (-15, 20)
@@ -661,17 +669,22 @@ md"""
 In this section we will benchmark inference performance with the help of BenchmarkTools package. `ReactiveMP.jl` has been designed to be efficient and scalable as much as possible. To show `ReactiveMP.jl` performance capabilities we run a series of benchmark tests for linear gaussian state space model with different number of observations and different seeds and θ parameters. We show that execution time scales linearly on number of observations and does not depend on seed or θ. 
 """
 
+# ╔═╡ 895e61c4-c8ba-4bb8-9c04-be6cea67d5eb
+function random_posdef_matrix(rng, dimension)
+	L = rand(rng, dimension, dimension)
+	return L' * L
+end
+
 # ╔═╡ 10965ed2-da40-4b6c-80a8-2f84590803a8
 function run_benchmark(inference_fn::Function, params)
-	@unpack n, seed, θ = params
+	@unpack n, d, seed = params
 	
-	A = [ 
-		cos(θ) -sin(θ); 
-		sin(θ) cos(θ) 
-	]
-	B = [ 1.3 0.0; 0.0 0.7 ]
-	P = [ 1.0 0.0; 0.0 1.0 ]
-	Q = [ 1.0 0.0; 0.0 1.0 ]
+	rng = MersenneTwister(seed)
+	
+	A = random_posdef_matrix(rng, d)
+	B = random_posdef_matrix(rng, d)
+	P = Matrix(Diagonal(ones(d)))
+	Q = Matrix(Diagonal(ones(d)))
 	
 	x, y = generate_data(
 		n    = n, 
@@ -685,7 +698,7 @@ function run_benchmark(inference_fn::Function, params)
 	x_estimated, bfe = inference_fn(y, A, B, P, Q);
 	benchmark        = @benchmark $inference_fn($y, $A, $B, $P, $Q)
 	
-	output = @strdict n seed θ x_estimated bfe benchmark
+	output = @strdict n d seed x_estimated bfe benchmark
 	
 	return output
 end
@@ -694,8 +707,8 @@ end
 # Here we create a list of parameters we want to run our benchmarks with
 benchmark_allparams = dict_list(Dict(
 	"n"    => [ 50, 100, 250, 500, 750, 1000, 1500, 2000, 2500, 5000, 10000 ],
-	"seed" => [ 42, 123 ],
-	"θ"    => [ π / 12, π / 24 ]
+	"d"    => [ 3, 10, 30 ],	
+	"seed" => [ 42 ]
 ));
 
 # ╔═╡ f8b90eeb-719f-456d-9fe5-d84fca13c65c
@@ -730,12 +743,12 @@ end;
 # ╔═╡ f9491325-a06a-47ca-af5a-b55077596730
 begin 
 	target_seed = 42
-	target_θ = π / 12
+	target_d = 3
 end;
 
 # ╔═╡ 5b0c1a35-b06f-43d4-b255-a1ab045de83c
 md"""
-Here we extract benchmarking results in a `DataFrame` table for seed = $(target_seed) and θ = $(round(target_θ, digits = 2))
+Here we extract benchmarking results in a `DataFrame` table for seed = $(target_seed) and d = $(target_d)
 """
 
 # ╔═╡ 3bf227ef-5390-4002-8285-5cabd8a50ec5
@@ -743,7 +756,7 @@ begin
 	local path_filtering = datadir("benchmark", "lgssm", "filtering")
 	local path_smoothing = datadir("benchmark", "lgssm", "smoothing")
 	
-	local white_list   = [ "n", "seed", "θ" ]
+	local white_list   = [ "n", "seed", "d" ]
 	local special_list = [
 		:min => (data) -> string(
 			round(minimum(data["benchmark"]).time / 1_000_000, digits = 2), "ms"
@@ -764,13 +777,13 @@ begin
 	)
 	
 	local query_filtering = @from row in df_filtering begin
-		@where row.seed == target_seed && row.θ == target_θ
+		@where row.seed == target_seed && row.d == target_d
 		@orderby ascending(row.n)
 		@select { row.n, row.min, row.mean }
 	end
 	
 	local query_smoothing = @from row in df_smoothing begin
-		@where row.seed == target_seed && row.θ == target_θ
+		@where row.seed == target_seed && row.d == target_d
 		@orderby ascending(row.n)
 		@select { row.n, row.min, row.mean }
 	end
@@ -798,13 +811,13 @@ Lets also plot benchmark timings for both smoothing and filtering algorithms aga
 """
 
 # ╔═╡ d485a985-39ec-422b-9476-d55b98786093
-begin
+let
 	local s_filtered = filter(smoothing_benchmarks) do b
-		return b["θ"] === target_θ && b["seed"] === target_seed
+		return b["d"] === target_d && b["seed"] === target_seed
 	end
 	
 	local f_filtered = filter(filtering_benchmarks) do b
-		return b["θ"] === target_θ && b["seed"] === target_seed
+		return b["d"] === target_d && b["seed"] === target_seed
 	end
 	
 	@assert length(s_filtered) !== 0 "Empty benchmark set"
@@ -876,9 +889,13 @@ Turing.@model LinearGaussianSSM(y, A, B, P, Q) = begin
 
     # State sequence.
     x = Vector(undef, n)
+	
+	d = first(size(A))
+	pm = zeros(d)
+	pc = Matrix(Diagonal(100.0 * ones(d)))
 
     # Observe each point of the input.
-    x[1] ~ MvNormal([ 0.0, 0.0 ], 1e1)
+    x[1] ~ MvNormal(pm, pc)
     y[1] ~ MvNormal(B * x[1], Q)
 
     for t in 2:n
@@ -931,7 +948,7 @@ x_turing_estimated = inference_turing(
 );
 
 # ╔═╡ 43649fce-8ee4-42a9-819b-ba17fa9de998
-begin
+let
 	local edim = (d...) -> (x) -> map(e -> e[d...], x)
 	local reshape_data = (data) -> transpose(reduce(hcat, data))
 	local reshape_turing_data = (data) -> transpose(
@@ -1019,15 +1036,14 @@ end
 
 # ╔═╡ 1751a9f2-2a5f-4cd7-8f0d-d5a3cae5518f
 function run_turing_benchmark(params)
-	@unpack n, seed, θ, nsamples = params
+	@unpack n, seed, d, nsamples = params
 	
-	A = [ 
-		cos(θ) -sin(θ); 
-		sin(θ) cos(θ) 
-	]
-	B = [ 1.3 0.0; 0.0 0.7 ]
-	P = [ 1.0 0.0; 0.0 1.0 ]
-	Q = [ 1.0 0.0; 0.0 1.0 ]
+	rng = MersenneTwister(seed)
+	
+	A = random_posdef_matrix(rng, d)
+	B = random_posdef_matrix(rng, d)
+	P = Matrix(Diagonal(ones(d)))
+	Q = Matrix(Diagonal(ones(d)))
 	
 	x, y = generate_data(
 		n    = n, 
@@ -1043,7 +1059,7 @@ function run_turing_benchmark(params)
 		$y, $A, $B, $P, $Q, nsamples = $nsamples
 	)
 	
-	output = @strdict n seed θ nsamples x_estimated benchmark
+	output = @strdict n seed d nsamples x_estimated benchmark
 	
 	return output
 end
@@ -1051,9 +1067,9 @@ end
 # ╔═╡ c41e8630-767a-4072-80a7-5ef8c5ecc4e0
 # Here we create a list of parameters we want to run our benchmarks with
 benchmark_allparams_turing = dict_list(Dict(
-	"n"        => [ 50, 100, 250, 500, 1000 ],
+	"n"        => [ 50, 100, 250 ], # 500, 1000
 	"seed"     => 42,
-	"θ"        => π / 12,
+	"d"        => [ 3, 10, 30 ],
 	"nsamples" => [ 
 		250, 500, @onlyif("n" <= 250, 1000) 
 	]
@@ -1126,7 +1142,7 @@ begin
 end
 
 # ╔═╡ 6b572117-9b58-41c5-a507-4f9e38de9db9
-begin
+let
 	local s_filtered = filter(smoothing_benchmarks) do b
 		return b["θ"] === target_θ && b["seed"] === target_seed
 	end
@@ -1210,7 +1226,7 @@ end
 # ╟─2ce93b39-70ea-4b33-b9df-64e6ade6f896
 # ╠═b0831de2-2aeb-432b-8987-872f4c5d74f0
 # ╟─934ad4d3-bb47-4174-b3d1-cbd6f8e5d75e
-# ╠═5becdba8-d38f-4d75-9c24-6790c73ff48b
+# ╟─5becdba8-d38f-4d75-9c24-6790c73ff48b
 # ╟─2530cf00-52c1-4c44-8d62-a3e4f0d411bc
 # ╠═fb94e6e9-10e4-4f9f-95e6-43cdd9184c09
 # ╟─84c171fc-fd79-43f2-942f-7ec6acd63c14
@@ -1231,6 +1247,7 @@ end
 # ╟─3beedf02-e870-4da9-89f4-a2667e5bee18
 # ╟─c082bbff-08ce-461e-a096-0df699a6f12d
 # ╟─4d3f9bdd-f89d-4fc4-924d-55008cd2c979
+# ╠═895e61c4-c8ba-4bb8-9c04-be6cea67d5eb
 # ╠═10965ed2-da40-4b6c-80a8-2f84590803a8
 # ╠═fe122f6a-a30d-4fad-abf5-2c62cac09836
 # ╟─f8b90eeb-719f-456d-9fe5-d84fca13c65c
