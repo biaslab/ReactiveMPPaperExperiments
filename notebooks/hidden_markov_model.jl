@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.16.0
 
 using Markdown
 using InteractiveUtils
@@ -71,6 +71,34 @@ md"""
 ### Model specification
 """
 
+# ╔═╡ 5c14ef6a-9a9a-4fb6-9e11-90a61b878866
+@model [ default_factorisation = MeanField() ] function hidden_markov_model(n)
+    
+	# A and B are unknown and are random variables with predefined priors
+    A ~ MatrixDirichlet(ones(3, 3))
+    B ~ MatrixDirichlet([ 10.0 1.0 1.0; 1.0 10.0 1.0; 1.0 1.0 10.0 ])
+    
+	# We create a vector of random variables for our latent states `s`
+    s = randomvar(n)
+	
+	# We create a vector of observation placeholders with `datavar()` function
+    x = datavar(Vector{Float64}, n)
+	
+	s[1] ~ Categorical(fill(1.0 / 3.0, 3))
+	x[1] ~ Transition(s[1], B)
+    
+    for t in 2:n
+		# `where` syntax allows us to pass extra arguments 
+		# or a node creation procedure
+		# In this example we create a structured posterior factorisation
+		# around latent states transition node
+        s[t] ~ Transition(s[t - 1], A) where { q = q(out, in)q(a) }
+        x[t] ~ Transition(s[t], B)
+    end
+    
+    return s, x, A, B
+end
+
 # ╔═╡ 927a5ad7-7ac0-4e8a-a755-d1223093b992
 md"""
 GraphPPL.jl offers a model specification syntax that resembles closely to the mathematical equations defined above. We use `Transition(s|x, A)` distribution as an alias for `Cat(s|A*x)` distribution, `datavar` placeholders are used to indicate variables that take specific values at a later date. For example, the way we feed observations into the model is by iteratively assigning each of the observations in our dataset to the data variables `x`.
@@ -104,34 +132,6 @@ begin
     A = [0.9 0.0 0.1; 0.1 0.9 0.0; 0.0 0.1 0.9] 
     # Observation noise
     B = [0.9 0.05 0.05; 0.05 0.9 0.05; 0.05 0.05 0.9] 
-end
-
-# ╔═╡ 5c14ef6a-9a9a-4fb6-9e11-90a61b878866
-@model [ default_factorisation = MeanField() ] function hidden_markov_model(n)
-    
-	# A and B are unknown and are random variables with predefined priors
-    A ~ MatrixDirichlet(ones(3, 3))
-    B ~ MatrixDirichlet([ 10.0 1.0 1.0; 1.0 10.0 1.0; 1.0 1.0 10.0 ])
-    
-	# We create a vector of random variables for our latent states `s`
-    s = randomvar(n)
-	
-	# We create a vector of observation placeholders with `datavar()` function
-    x = datavar(Vector{Float64}, n)
-	
-	s[1] ~ Categorical(fill(1.0 / 3.0, 3))
-	x[1] ~ Transition(s[1], B)
-    
-    for t in 2:n
-		# `where` syntax allows us to pass extra arguments 
-		# or a node creation procedure
-		# In this example we create a structured posterior factorisation
-		# around latent states transition node
-        s[t] ~ Transition(s[t - 1], A) where { q = q(out, in)q(a) }
-        x[t] ~ Transition(s[t], B)
-    end
-    
-    return s, x, A, B
 end
 
 # ╔═╡ 34ef9070-dc89-4a56-8914-b3c8bd3288ba

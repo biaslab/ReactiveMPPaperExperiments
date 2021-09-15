@@ -706,8 +706,8 @@ end
 # ╔═╡ fe122f6a-a30d-4fad-abf5-2c62cac09836
 # Here we create a list of parameters we want to run our benchmarks with
 benchmark_allparams = dict_list(Dict(
-	"n"    => [ 50, 100, 250, 500, 750, 1000, 1500, 2000, 2500, 5000, 10000 ],
-	"d"    => [ 3, 10, 30 ],	
+	"n"    => [ 50, 100, 250, 500, 750, 1000, 1500, 2000, 2500, 5000, 10000, 100000 ],
+	"d"    => [ 2, 3, 10 ],	
 	"seed" => [ 42 ]
 ));
 
@@ -743,7 +743,7 @@ end;
 # ╔═╡ f9491325-a06a-47ca-af5a-b55077596730
 begin 
 	target_seed = 42
-	target_d = 3
+	target_d = 10
 end;
 
 # ╔═╡ 5b0c1a35-b06f-43d4-b255-a1ab045de83c
@@ -763,6 +763,9 @@ begin
 		),
 		:mean => (data) -> string(
 			round(mean(data["benchmark"]).time / 1_000_000, digits = 2), "ms"
+		),
+		:gctime => (data) -> string(
+			round(minimum(data["benchmark"]).gctime / minimum(data["benchmark"]).time * 100, digits = 2), "%"
 		)
 	]
 	
@@ -779,13 +782,13 @@ begin
 	local query_filtering = @from row in df_filtering begin
 		@where row.seed == target_seed && row.d == target_d
 		@orderby ascending(row.n)
-		@select { row.n, row.min, row.mean }
+		@select { row.n, row.min, row.gctime }
 	end
 	
 	local query_smoothing = @from row in df_smoothing begin
 		@where row.seed == target_seed && row.d == target_d
 		@orderby ascending(row.n)
-		@select { row.n, row.min, row.mean }
+		@select { row.n, row.min, row.gctime }
 	end
 	
 	local res_filtering = DataFrame(query_filtering)
@@ -795,8 +798,8 @@ begin
 	local df = rightjoin(res_filtering, res_smoothing, on = :n, makeunique = true)
 	
 	df = rename(df, 
-		:min => :min_filtering, :mean => :mean_filtering,
-		:min_1 => :min_smoothing, :mean_1 => :mean_smoothing
+		:gctime => :gctime_filtering,
+		:gctime_1 => :gctime_smoothing
 	)
 end
 
@@ -1069,7 +1072,7 @@ end
 benchmark_allparams_turing = dict_list(Dict(
 	"n"        => [ 50, 100, 250 ], # 500, 1000
 	"seed"     => 42,
-	"d"        => [ 3, 10, 30 ],
+	"d"        => [ 3 ],
 	"nsamples" => [ 
 		250, 500, @onlyif("n" <= 250, 1000) 
 	]
@@ -1097,7 +1100,7 @@ begin
 	local path_turing    = datadir("benchmark", "lgssm", "turing")
 	local path_smoothing = datadir("benchmark", "lgssm", "smoothing")
 	
-	local white_list   = [ "n", "seed", "θ" ]
+	local white_list   = [ "n", "seed", "d" ]
 	local special_list = [
 		:min => (data) -> string(
 			round(minimum(data["benchmark"]).time / 1_000_000_000, digits = 3), "s"
@@ -1118,13 +1121,13 @@ begin
 	)
 	
 	local query_turing = @from row in df_turing begin
-		@where row.seed == target_seed && row.θ == target_θ && row.nsamples == 1000
+		@where row.seed == target_seed && row.d == target_d && row.nsamples == 1000
 		@orderby ascending(row.n)
 		@select { row.n, row.min, row.mean }
 	end
 	
 	local query_smoothing = @from row in df_smoothing begin
-		@where row.seed == target_seed && row.θ == target_θ
+		@where row.seed == target_seed && row.d == target_d
 		@orderby ascending(row.n)
 		@select { row.n, row.min, row.mean }
 	end
@@ -1144,11 +1147,11 @@ end
 # ╔═╡ 6b572117-9b58-41c5-a507-4f9e38de9db9
 let
 	local s_filtered = filter(smoothing_benchmarks) do b
-		return b["θ"] === target_θ && b["seed"] === target_seed
+		return b["d"] === target_d && b["seed"] === target_seed
 	end
 	
 	local t_filtered = filter(turing_benchmarks) do b
-		return b["θ"] === target_θ && 
+		return b["d"] === target_d && 
 			b["seed"] === target_seed && 
 			b["nsamples"] === 500
 	end
