@@ -29,7 +29,7 @@ begin
 	using DrWatson, PlutoUI, Images
 	using CairoMakie
     using ReactiveMP, Rocket, GraphPPL, Distributions, Random
-	using BenchmarkTools
+	using BenchmarkTools, DataFrames, Query, LinearAlgebra
 
 	import ReactiveMP: update!
 end
@@ -129,7 +129,7 @@ end
 # ╔═╡ 30f46dae-6665-4bbc-9451-ee6744c5a6aa
 begin
 	# Transition probabilities (some transitions are impossible)
-    A = [0.9 0.0 0.1; 0.1 0.9 0.0; 0.0 0.1 0.9] 
+    A = [0.9 0.0 0.1; 0.1 0.9 0.0; 0.0 0.1 0.9]
     # Observation noise
     B = [0.9 0.05 0.05; 0.05 0.9 0.05; 0.05 0.05 0.9] 
 end
@@ -166,7 +166,7 @@ Pluto notebooks allow us to dynamically change some parameters and arguments for
 # ╔═╡ 1d23082e-ab18-4ca6-9383-aaebddb29f00
 begin
 	seed_slider = @bind(seed, ThrottledSlider(1:100, default = 54))
-	n_slider    = @bind(n, ThrottledSlider(2:100, default = 50))
+	n_slider    = @bind(n, ThrottledSlider(2:1000, default = 50))
 end;
 
 # ╔═╡ f28c42fc-1e8a-4e3b-a0cf-73da0c7875cd
@@ -418,8 +418,8 @@ end
 # ╔═╡ ec396167-5410-47f0-bd49-63d0e77f409c
 # Here we create a list of parameters we want to run our benchmarks with
 benchmark_allparams = dict_list(Dict(
-	"n"     => [ 50, 100, 250, 500, 1000, 2500, 5000, 10000 ],
-	"n_itr" => [ 5, 10, 15, 20, 25 ],
+	"n"     => [ 50, 100, 250, 500, 1000, 2500, 5000, 10000, 25_000 ],
+	"n_itr" => [ 5, 10, 15, 20, 25, @onlyif("n" >= 5000, 60) ],
 	"seed"  => 42,
 ));
 
@@ -432,6 +432,45 @@ hmm_benchmarks = map(benchmark_allparams) do params
 	result, _ = produce_or_load(path, params, run_benchmark)
 	return result
 end;
+
+# ╔═╡ d1b2fe90-c446-41ef-a446-e33ca6f3d376
+begin
+	target_seed = 42
+	target_n_itr = 15
+end
+
+# ╔═╡ d9c069b9-2fdf-493f-9745-82e118ae2e80
+begin
+	local path_smoothing = datadir("benchmark", "hmm", "smoothing")
+	
+	local white_list   = [ "n", "n_itr", "seed" ]
+	local special_list = [
+		:min => (data) -> string(
+			round(minimum(data["benchmark"]).time / 1_000_000, digits = 2), "ms"
+		),
+		:mean => (data) -> string(
+			round(mean(data["benchmark"]).time / 1_000_000, digits = 2), "ms"
+		),
+		:gctime => (data) -> string(
+			round(minimum(data["benchmark"]).gctime / minimum(data["benchmark"]).time * 100, digits = 2), "%"
+		)
+	]
+	
+	local df_smoothing = collect_results(path_smoothing, 
+		white_list = white_list,
+		special_list = special_list
+	)
+	
+	local query_smoothing = @from row in df_smoothing begin
+		@where row.seed == target_seed && row.n_itr == target_n_itr
+		@orderby ascending(row.n)
+		@select { row.n, row.min, row.gctime }
+	end
+	
+	local res_smoothing = DataFrame(query_smoothing)
+	
+	res_smoothing
+end
 
 # ╔═╡ b0f8b89a-b4e4-4199-94c9-0b9a9fd06902
 target_n_itrs = [ 5, 15, 25 ]
@@ -526,6 +565,91 @@ begin
 	@saveplot fig "hmm_benchmark_iterations"
 end
 
+# ╔═╡ 244e48cd-d6f2-46b5-bc1b-1edbc23b504f
+md"""
+### Comparison with Turing.jl
+
+In this section we want to compare results and performance of ReactiveMP.jl with another probabilistic programming library which is called Turing.jl. Turing is a general probabilistic programming toolbox and does not use message passing for inference procedure, but sampling. Message passing has an advantage over sampling approach for conjugate models (which our linear gaussian state space model is) because it may fallback to analytically tractable update rules, where sampling cannot. 
+"""
+
+# ╔═╡ ae607537-67e0-48aa-95ef-69152c28394a
+import Turing, MCMCChains
+
+# ╔═╡ 57386c71-97b0-4284-8c21-e22954f4c1ce
+# Turing model definition.
+Turing.@model BayesHmm(y, K) = begin
+    # Get observation length.
+    N = length(y)
+
+    # State sequence.
+    s = Turing.tzeros(Int, N)
+
+    # Transition matrix.
+    A = Vector{Vector}(undef, K)
+	
+    # Observations model matrix.
+	B = Vector{Vector}(undef, K)
+
+    # Assign distributions to each element
+    # of the transition matrix and the
+    # emission matrix.
+    for i = 1:K
+        A[i] ~ Dirichlet(ones(K)/K)
+		B[i] ~ Dirichlet(ones(K)/K)
+    end
+
+    # Observe each point of the input.
+    s[1] ~ Categorical(K)
+    y[1] ~ Categorical(vec(B[s[1]]))
+
+    for i = 2:N
+        s[i] ~ Categorical(vec(A[s[i - 1]]))
+        y[i] ~ Categorical(vec(B[s[i]]))
+    end
+end;
+
+# ╔═╡ d3fde0c7-c45a-4d4f-a8cc-f3fc482a4119
+function inference_turing(observations; nsamples = 250, seed = 42)
+	rng     = MersenneTwister(seed)
+	sampler = Turing.Gibbs(Turing.HMC(0.1, 20, :A, :B), Turing.PG(100, :s))
+    return Turing.sample(rng, BayesHmm(observations, 3), sampler, nsamples)
+end
+
+# ╔═╡ 4918f180-03e4-4ad4-bf96-14a3a167feb6
+begin 
+	n_turing = 50
+	x_turing, s_turing = generate_data(n_turing, A, B, seed = seed);
+	x_turing           = float.(last.(findmax.(x_turing))) # Turing format
+end;
+
+# ╔═╡ bd9a52e2-a9bc-4513-babc-037068a939e8
+s_turing_estimated = inference_turing(x_turing);
+
+# ╔═╡ f9c03f28-6eef-4929-9ea8-86d6a27ba192
+summary = Turing.summarize(s_turing_estimated, Turing.mean, Turing.std);
+
+# ╔═╡ 2e24dbb8-9e86-4cad-94e6-77b4544593d5
+invertf(x; d = 3) = (1 - d) / (d - 1) * x - ((1 - d) / (d - 1) - d)
+
+# ╔═╡ 0280b410-4603-486d-b681-59d103812220
+begin
+	turing_s_means = invertf.(map(i -> summary[Symbol("s[$i]")].nt.mean |> first, 1:n))
+	turing_s_stds = map(i -> summary[Symbol("s[$i]")].nt.std |> first, 1:n)
+end
+
+# ╔═╡ dedfdd8e-dbd0-42ef-954a-43ae0745c92d
+begin
+	f = Figure()
+	
+	ax = CairoMakie.Axis(f[1, 1])
+	
+	lines!(ax, turing_s_means)
+	band!(ax, 1:n, turing_s_means .- turing_s_stds, turing_s_means .+ turing_s_stds )
+	lines!(ax, float.(last.(findmax.(s_turing))))
+	
+	f
+end
+
 # ╔═╡ Cell order:
 # ╠═a4affbe0-9d3d-11eb-1ca5-059daf3d3141
 # ╠═f1b341d4-d730-4f98-89d8-3337e6bc0ce1
@@ -562,7 +686,19 @@ end
 # ╠═30eb1c10-cd89-4304-abbe-08934a6dcdae
 # ╠═ec396167-5410-47f0-bd49-63d0e77f409c
 # ╠═c6c92af2-5797-4d69-9dda-e07eb68ff359
+# ╠═d1b2fe90-c446-41ef-a446-e33ca6f3d376
+# ╟─d9c069b9-2fdf-493f-9745-82e118ae2e80
 # ╠═b0f8b89a-b4e4-4199-94c9-0b9a9fd06902
 # ╟─6c3b504a-b8d6-41e2-8178-fc819a465f2b
 # ╠═f2b495ab-f3fc-4e09-b0d9-33311c2d08f8
 # ╟─2796dc7a-cd99-4f8e-89eb-89ea4e302813
+# ╟─244e48cd-d6f2-46b5-bc1b-1edbc23b504f
+# ╠═ae607537-67e0-48aa-95ef-69152c28394a
+# ╠═57386c71-97b0-4284-8c21-e22954f4c1ce
+# ╠═d3fde0c7-c45a-4d4f-a8cc-f3fc482a4119
+# ╠═4918f180-03e4-4ad4-bf96-14a3a167feb6
+# ╠═bd9a52e2-a9bc-4513-babc-037068a939e8
+# ╠═f9c03f28-6eef-4929-9ea8-86d6a27ba192
+# ╠═0280b410-4603-486d-b681-59d103812220
+# ╠═2e24dbb8-9e86-4cad-94e6-77b4544593d5
+# ╟─dedfdd8e-dbd0-42ef-954a-43ae0745c92d

@@ -743,7 +743,7 @@ end;
 # ╔═╡ f9491325-a06a-47ca-af5a-b55077596730
 begin 
 	target_seed = 42
-	target_d = 10
+	target_d = 3
 end;
 
 # ╔═╡ 5b0c1a35-b06f-43d4-b255-a1ab045de83c

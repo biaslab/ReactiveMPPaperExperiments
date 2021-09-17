@@ -2,11 +2,16 @@ module ReactiveMPPaperExperiments
 
 export @saveplot, @saveplot_force
 
+include("helpers.jl")
+include("algebra.jl")
 include("helpers/throttled_slider.jl")
+
+include("models.jl")
+include("models/lgssm.jl")
 
 macro saveplot(p, name)
     output = quote
-        if !in(:PlutoRunner, names(Main))
+        if false
             local output_tikz = string($name, ".pdf")
             local output_png = string($name, ".png")
             save(plotsdir(output_tikz), $p)
