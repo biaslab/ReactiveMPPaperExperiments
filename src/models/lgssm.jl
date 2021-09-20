@@ -8,11 +8,15 @@ using DrWatson
 
 function generate_data(::LGSSMModel, parameters)
 
-    @unpack n, A, B, P, Q, seed = parameters
+    @unpack n, d, A, B, P, Q, seed = parameters
 
-    rng = MersenneTwister(seed)
+    @assert size(A) === (d, d)
+    @assert size(B) === (d, d)
+    @assert size(P) === (d, d)
+    @assert size(Q) === (d, d)
 
-    x_prev = zeros(first(size(A)))
+    rng    = MersenneTwister(seed)
+    x_prev = zeros(d)
 
     x = Vector{Vector{Float64}}(undef, n)
     y = Vector{Vector{Float64}}(undef, n)
