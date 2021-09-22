@@ -10,6 +10,7 @@ include("helpers/throttled_slider.jl")
 include("models.jl")
 include("models/lgssm.jl")
 include("models/hmm.jl")
+include("models/hgf.jl")
 
 macro saveplot(p, name)
     output = quote
