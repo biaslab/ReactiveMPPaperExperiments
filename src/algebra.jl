@@ -1,4 +1,4 @@
-export rotation_matrix, diagonal_matrix, random_posdef_matrix
+export rotation_matrix, random_rotation_matrix, diagonal_matrix, random_posdef_matrix
 
 using LinearAlgebra
 using Random
@@ -10,6 +10,24 @@ function rotation_matrix(θ)
         cos(θ) -sin(θ); 
         sin(θ) cos(θ) 
     ]
+end
+
+function random_rotation_matrix(rng, dimension)
+    R = Matrix(Diagonal(ones(dimension)))
+
+    θ = π/20 * rand(rng)
+
+    for i in 1:dimension 
+        for j in (i + 1):dimension
+            S = Matrix(Diagonal(ones(dimension)))
+            S[i, i] = cos(θ)
+            S[j, j] = cos(θ)
+            S[i, j] = sin(θ)
+            S[j, i] = -sin(θ)
+            R = R * S
+        end
+    end
+    return R
 end
 
 function diagonal_matrix(values)
