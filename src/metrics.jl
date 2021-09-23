@@ -11,11 +11,11 @@ import ForneyLab
 
 function average_mse(real, estimated::E; seed = 42, nsamples = 2_000, posf = abs2) where { E <: AbstractVector{ <: ReactiveMP.Marginal } }
     rng     = MersenneTwister(seed)
-    average = zero(first(real))
+    average = zero(eltype(first(real)))
 
     for _ in 1:nsamples
         samples = map(e -> rand(rng, ReactiveMP.getdata(e)), estimated)
-        mse = sqrt.(mapreduce(r -> posf.(r[1] - r[2]), +, zip(real, samples)))
+        mse = mapreduce(r -> (r[1] - r[2])' * (r[1] - r[2]), +, zip(real, samples))
         average += (mse ./ nsamples)
     end
 
