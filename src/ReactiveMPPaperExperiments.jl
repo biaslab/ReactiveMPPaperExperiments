@@ -7,6 +7,8 @@ include("algebra.jl")
 include("metrics.jl")
 include("helpers/throttled_slider.jl")
 
+include("metrics/amse_gaussian.jl")
+
 include("models.jl")
 include("models/lgssm.jl")
 include("models/hmm.jl")
