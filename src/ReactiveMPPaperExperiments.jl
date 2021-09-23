@@ -11,6 +11,7 @@ include("models.jl")
 include("models/lgssm.jl")
 include("models/hmm.jl")
 include("models/hgf.jl")
+include("models/gmm.jl")
 
 macro saveplot(p, name)
     output = quote
