@@ -13,6 +13,10 @@ function average_mse(states::AbstractVector, estimated::AbstractVector)
     return average_mse(eltype(states), eltype(estimated), states, estimated)
 end
 
+function average_mse(::Type{T}, ::Type{ Any }, states, estimated) where { T }
+    return average_mse(T, typeof(first(estimated)), states, estimated)
+end
+
 ## ReactiveMP generic 
 
 function average_mse(::Type{T}, ::Type{ <: ReactiveMP.Marginal }, states, estimated) where { T, F }
