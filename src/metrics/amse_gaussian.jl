@@ -5,14 +5,6 @@ import ForneyLab
 
 ## ReactiveMP
 
-function average_mse(states::AbstractVector, estimated::AbstractVector)
-    return average_mse(eltype(states), eltype(estimated), states, estimated)
-end
-
-function average_mse(::Type{T}, ::Type{ <: ReactiveMP.Marginal }, states, estimated) where T
-    return average_mse(T, typeof(ReactiveMP.getdata(first(estimated))), states, estimated)
-end
-
 function average_mse(::Type{ <: Real }, ::Type{ <: ReactiveMP.UnivariateGaussianDistributionsFamily }, states, estimated)
     return mapreduce(+, zip(states, estimated)) do (s, e)
         return var(e) + abs2(s - mean(e))
@@ -28,7 +20,7 @@ end
 
 ## ForneyLab
 
-function average_mse(::Type{ <: AbstractVector }, ::Type{ <: ForneyLab.ProbabilityDistribution }, states, estimates)
+function average_mse(::Type{ <: AbstractVector }, ::Type{ <: ForneyLab.Gaussian }, states, estimates)
     converted = map(estimates) do e 
         return ReactiveMP.MvNormalMeanCovariance(ForneyLab.unsafeMeanCov(e)...)
     end
