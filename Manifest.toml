@@ -139,9 +139,9 @@ version = "0.4.1"
 
 [[CPUSummary]]
 deps = ["Hwloc", "IfElse", "Static"]
-git-tree-sha1 = "ed720e2622820bf584d4ad90e6fcb93d95170b44"
+git-tree-sha1 = "38d0941d2ce6dd96427fd033d45471e1f26c3865"
 uuid = "2a0fbf3d-bb9c-48f3-b0a9-814d99fd7ab9"
-version = "0.1.3"
+version = "0.1.5"
 
 [[Cairo]]
 deps = ["Cairo_jll", "Colors", "Glib_jll", "Graphics", "Libdl", "Pango_jll"]
@@ -163,9 +163,9 @@ version = "1.16.1+0"
 
 [[ChainRules]]
 deps = ["ChainRulesCore", "Compat", "LinearAlgebra", "Random", "Statistics"]
-git-tree-sha1 = "d88340ab502af66cfffc821e70ae72f7dbdce645"
+git-tree-sha1 = "74c737978316e19e0706737542037c468b21a8d9"
 uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
-version = "1.11.5"
+version = "1.11.6"
 
 [[ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -187,9 +187,9 @@ version = "0.4.0"
 
 [[ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random"]
-git-tree-sha1 = "9995eb3977fbf67b86d0a0a0508e83017ded03f2"
+git-tree-sha1 = "a851fec56cb73cfdf43762999ec72eff5b86882a"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.14.0"
+version = "3.15.0"
 
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -227,9 +227,9 @@ version = "0.3.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "SHA", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "1a90210acd935f222ea19657f143004d2c2a1117"
+git-tree-sha1 = "31d0151f5716b655421d9d75b7fa74cc4e744df2"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "3.38.0"
+version = "3.39.0"
 
 [[CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -433,9 +433,9 @@ version = "1.11.1"
 
 [[FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays", "Statistics"]
-git-tree-sha1 = "7f6ad1a7f4621b4ab8e554133dade99ebc6e7221"
+git-tree-sha1 = "29890dfbc427afa59598b8cfcc10034719bd7744"
 uuid = "1a297f60-69ca-5386-bcde-b61e274b549b"
-version = "0.12.5"
+version = "0.12.6"
 
 [[FiniteDiff]]
 deps = ["ArrayInterface", "LinearAlgebra", "Requires", "SparseArrays", "StaticArrays"]
@@ -844,9 +844,9 @@ version = "0.4.7"
 
 [[LoopVectorization]]
 deps = ["ArrayInterface", "CPUSummary", "CloseOpenIntervals", "DocStringExtensions", "HostCPUFeatures", "IfElse", "LayoutPointers", "LinearAlgebra", "OffsetArrays", "PolyesterWeave", "Requires", "SLEEFPirates", "Static", "ThreadingUtilities", "UnPack", "VectorizationBase"]
-git-tree-sha1 = "4804192466f4d370ca19c9957dfb3d919e6ef77e"
+git-tree-sha1 = "23b22559423dbf0217f28ea58ac05242a7770194"
 uuid = "bdcacae8-1622-11e9-2a5c-532679323890"
-version = "0.12.77"
+version = "0.12.79"
 
 [[MCMCChains]]
 deps = ["AbstractMCMC", "AxisArrays", "Compat", "Dates", "Distributions", "Formatting", "IteratorInterfaceExtensions", "KernelDensity", "LinearAlgebra", "MCMCDiagnosticTools", "MLJModelInterface", "NaturalSort", "OrderedCollections", "PrettyTables", "Random", "RecipesBase", "Serialization", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "TableTraits", "Tables"]
@@ -1120,9 +1120,9 @@ version = "1.0.14"
 
 [[Polyester]]
 deps = ["ArrayInterface", "BitTwiddlingConvenienceFunctions", "CPUSummary", "IfElse", "ManualMemory", "PolyesterWeave", "Requires", "Static", "StrideArraysCore", "ThreadingUtilities"]
-git-tree-sha1 = "74d358e649e0450cb5d3ff54ca7c8d806ed62765"
+git-tree-sha1 = "7d5f510622439729f13662a492f9977e7797ea6e"
 uuid = "f517fe37-dbe3-4b94-8317-1923a5111588"
-version = "0.5.1"
+version = "0.5.2"
 
 [[PolyesterWeave]]
 deps = ["BitTwiddlingConvenienceFunctions", "CPUSummary", "IfElse", "Static", "ThreadingUtilities"]
