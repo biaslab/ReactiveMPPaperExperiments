@@ -417,14 +417,27 @@ function ruleMGaussianMeanPrecisionEGD(
     msg_mean::Message{F, Univariate},
     dist_prec::ProbabilityDistribution) where F<:Gaussian
 
-    W_bar = unsafeMean(dist_prec)
-    h(z) = msg_out.dist.params[:log_pdf](z[1]) + logPdf(msg_mean.dist,z[2])
-    m_mean = unsafeMean(msg_mean.dist)
-    z_0 = [m_mean+sqrt.(1/W_bar)*randn(); m_mean]
-    m,V = NewtonMethod(h,z_0)
+#     W_bar = unsafeMean(dist_prec)
+#     h(z) = msg_out.dist.params[:log_pdf](z[1]) + logPdf(msg_mean.dist,z[2])
+#     m_mean = unsafeMean(msg_mean.dist)
+#     z_0 = [m_mean+sqrt.(1/W_bar)*randn(); m_mean]
+#     m,V = NewtonMethod(h,z_0)
+    
+    p = 20
+    d = ProbabilityDistribution(Univariate, GaussianMeanVariance, m = 0.0, v = 1.0)
+    
+    g = (z) -> exp(msg_out.dist.params[:log_pdf](z)) * exp(0.5 * z^2)
 
+    normalization_constant = quadrature(g, d, p)
+    t = (z) -> z * g(z) / normalization_constant
+    mean = quadrature(t, d, p)
+    s = (z) -> (z - mean)^2 * g(z) / normalization_constant
+    var = quadrature(s, d, p)
 
-    return ProbabilityDistribution(Multivariate, GaussianMeanVariance,m=m,v=V)
+    m_out = Message(GaussianMeanVariance, m=mean, v=var)
+
+    return ruleMGaussianMeanPrecisionGGD(m_out, msg_mean, dist_prec)
+#     return ProbabilityDistribution(Multivariate, GaussianMeanVariance,m=m,v=V)
 end
 
 mutable struct SPEqualityGaussianGCV <: SumProductRule{Equality} end
