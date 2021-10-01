@@ -15,7 +15,7 @@ end
 function random_rotation_matrix(rng, dimension)
     R = Matrix(Diagonal(ones(dimension)))
 
-    θ = π/20 * rand(rng)
+    θ = π/4 * rand(rng)
 
     for i in 1:dimension 
         for j in (i + 1):dimension
