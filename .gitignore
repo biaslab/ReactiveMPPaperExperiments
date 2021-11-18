@@ -4,6 +4,7 @@
 
 # Folders to ignore - files may be too large, too many, etc. NOTE: EDIT IF NEEDED.
 data
+data.zip
 videos
 _research
 
