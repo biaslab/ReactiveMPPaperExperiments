@@ -4,6 +4,7 @@ authors = ["Bagaev Dmitry <bvdmitri@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+AdvancedPS = "576499cb-2369-40b2-a588-c64705576edc"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
