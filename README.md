@@ -26,7 +26,7 @@ To (locally) reproduce this project, do the following:
    This command will replicate the exact same environment as was used during the experiments. Any other `Pkg` related commands may alter this enviroment or/and change versions of packages.
 4. (Optional) Download precomputed benchmark .JLD2 files from [releases](https://github.com/biaslab/ReactiveMPPaperExperiments/releases) page and unzip them in `data` folder.
    
-   Precomputed benchmarks drastically reduce the amount of time needed to run notebooks and represent the exact same data used in the paper submission.
+   Precomputed benchmarks drastically reduce the amount of time needed to run notebooks and represent the exact same data used in the paper submission. Note, however, that benchmark results on different machines may differ.
 
 This will install all necessary packages for you to be able to run the scripts and
 everything should work out of the box.
