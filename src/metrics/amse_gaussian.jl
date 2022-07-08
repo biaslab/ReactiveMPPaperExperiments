@@ -37,6 +37,13 @@ end
 
 ## Turing
 
+function average_mse(::Type{ <: AbstractVector }, ::Type{ <: Turing.AbstractMvNormal }, states, estimated)
+    return mapreduce(+, zip(states, estimated)) do (s, e)
+        diff = s .- mean(e)
+        return tr(cov(e)) + diff' * diff 
+    end
+end
+
 function average_mse(states::AbstractVector, chains::Turing.Chains, s::Symbol, ::Type{ MvNormal })
     d = length(first(states))
     
