@@ -9,7 +9,7 @@ To (locally) reproduce this project, do the following:
 
 0. Install the [Julia](https://julialang.org/) programming language of 1.6.x version, [Jupyter](https://jupyter.org/) notebooks and [`IJulia`](https://github.com/JuliaLang/IJulia.jl) kernel.
 
-   **Important**: Experiments have been verified on Julia 1.6.4. To manage different version of Julia we can recommended [jill.py](https://github.com/johnnychen94/jill.py) - console-based Julia installer (Linux and MacOS only).
+   **Important**: Experiments have been verified on Julia 1.6.4. To manage different version of Julia we can recommended [juliup](https://github.com/JuliaLang/juliaup) - cross-platform Julia version manager.
 
 1. Install `DrWatson` julia package with the following command:
 
